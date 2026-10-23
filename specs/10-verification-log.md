@@ -39,6 +39,15 @@ check was skipped, say so.
   live-event rules. Rate limit moved to P1. Team Members see all project tasks (participant
   decision).
 
+### 2026-10-23 — S0 + S1 Database foundation
+
+- S0: scaffold + specs pushed (`9a8b990`). Databases created from `template0` (template1 has a
+  collation-version mismatch). Ports 3000/4000 free.
+- S1 commands: `db:migrate` ✅ · `db:status` → applied · `db:seed` → 38 inserted, re-run → 0 ·
+  `db:rollback` + `db:migrate` + `db:seed` ✅ · counts users 8 / projects 3 / members 10 / tasks 12 /
+  comments 5 · `npm run check` → lint ✅ typecheck ✅ unit 4/4 ✅ builds ✅ · `GET /api/health` → 200.
+- Known: the starter home page still calls the removed `/api/hello`; replaced in S4.
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

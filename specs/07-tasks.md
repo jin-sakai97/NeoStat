@@ -10,30 +10,30 @@ Commit message format: `S<n>: <imperative summary>` + body bullets + the attribu
 
 ## S0 — Environment gate (before the timer)
 
-- [ ] **T0.1** Stop the old dev servers holding ports 3000 and 4000 (`ss -ltnp | grep -E ':(3000|4000)'`, then stop those `npm run dev` terminals).
-- [ ] **T0.2** Create the databases (the `mrrobot` role lacks CREATEDB). The participant runs:
+- [x] **T0.1** Stop the old dev servers holding ports 3000 and 4000 (`ss -ltnp | grep -E ':(3000|4000)'`, then stop those `npm run dev` terminals).
+- [x] **T0.2** Create the databases (the `mrrobot` role lacks CREATEDB). The participant runs:
       ```bash
-      sudo -u postgres createdb -O mrrobot neostat
-      sudo -u postgres createdb -O mrrobot neostat_test
+      createdb -h localhost -U postgres -T template0 -O mrrobot neostat
+      createdb -h localhost -U postgres -T template0 -O mrrobot neostat_test
       ```
-      Verify: `psql -h localhost -d neostat -c 'select 1'` and the same for `neostat_test`.
-- [ ] **T0.3** Decide how to connect: Unix socket peer auth (`postgresql:///neostat`) or TCP with a password. Verify that `psql "$DATABASE_URL" -c 'select 1'` works with the exact URL that goes into `.env`.
-- [ ] **T0.4** `npm test` passes (baseline 4/4 ✅ measured 2026-10-23).
-- [ ] **T0.5** Two browser sessions available (a normal and a private window).
-- [ ] **T0.6** `git push` works to `origin` (github.com/jin-sakai97/NeoStat). Repo visibility checked. Brief text is never committed.
-- [ ] **T0.7** Commit the existing scaffold as-is first (`S0: commit starter scaffold and specs`), after reviewing `git status` so that `.env` files are not staged.
+      `-T template0` avoids the template1 collation-version error on this machine. Verify: `psql -h localhost -d neostat -c 'select 1'` and the same for `neostat_test`.
+- [x] **T0.3** Decide how to connect: Unix socket peer auth (`postgresql:///neostat`) or TCP with a password. Verify that `psql "$DATABASE_URL" -c 'select 1'` works with the exact URL that goes into `.env`.
+- [x] **T0.4** `npm test` passes (baseline 4/4 ✅ measured 2026-10-23).
+- [x] **T0.5** Two browser sessions available (a normal and a private window).
+- [x] **T0.6** `git push` works to `origin` (github.com/jin-sakai97/NeoStat). Repo visibility checked. Brief text is never committed.
+- [x] **T0.7** Commit the existing scaffold as-is first (`S0: commit starter scaffold and specs`), after reviewing `git status` so that `.env` files are not staged.
 
 ## S1 — Database foundation (0–25 min) · R10
 
-- [ ] **T1.1** Server deps: `npm i -w server pg connect-pg-simple express-session express-rate-limit` and `npm i -D -w server node-pg-migrate @types/pg @types/express-session @types/connect-pg-simple`. Remove `mongoose migrate-mongo`.
-- [ ] **T1.2** Delete Mongo files: `server/src/models/`, `server/migrate-mongo-config.cjs`, `server/migrations/202610230001-initial-collections.cjs`, `server/dist/` (build output).
-- [ ] **T1.3** `server/src/config/env.ts`: `DATABASE_URL` (postgres URL), `TEST_DATABASE_URL` (optional), `SESSION_SECRET` (min 32 chars), keep `PORT`, `CLIENT_ORIGIN`, `NODE_ENV`. Never echo values.
-- [ ] **T1.4** `server/.env.example` and `client/.env.example` with all variables (`00-plan` §8). `scripts/setup.mjs`: when it creates `server/.env`, replace the `SESSION_SECRET=` placeholder with `crypto.randomBytes(32).toString('base64url')`. Keep existing files untouched and never print the secret.
-- [ ] **T1.5** `server/src/db/pool.ts`: `pg.Pool`, `withTransaction<T>(fn: (c: PoolClient) => Promise<T>)` (BEGIN/COMMIT/ROLLBACK, always `release()`), and a `ping()` helper.
-- [ ] **T1.6** Migration file exactly as in `→ 04 §2`. Scripts: `db:migrate` = `node-pg-migrate up -m migrations --migration-file-language sql`, `db:rollback` = `down`, and `db:status` (list via `node-pg-migrate` dry-run or a small script that reads the `pgmigrations` table). Make sure node-pg-migrate reads `DATABASE_URL` from `server/.env` (dotenv-cli or `--envPath .env`).
-- [ ] **T1.7** `server/src/db/fixtures.ts` + `seed.ts` per `→ 04 §4`. Idempotent and production-guarded.
-- [ ] **T1.8** `GET /api/health` uses `ping()`. Remove `/api/hello`. Update the existing unit tests accordingly.
-- [ ] **T1.9** Root `package.json`: `db:up` → `docker compose up -d --wait postgres`. `compose.yaml` → `postgres:18`, `127.0.0.1:5432:5432`, volume `pg-data`, env `POSTGRES_DB=neostat`, healthcheck `pg_isready`.
+- [x] **T1.1** Server deps: `npm i -w server pg connect-pg-simple express-session express-rate-limit` and `npm i -D -w server node-pg-migrate @types/pg @types/express-session @types/connect-pg-simple`. Remove `mongoose migrate-mongo`.
+- [x] **T1.2** Delete Mongo files: `server/src/models/`, `server/migrate-mongo-config.cjs`, `server/migrations/202610230001-initial-collections.cjs`, `server/dist/` (build output).
+- [x] **T1.3** `server/src/config/env.ts`: `DATABASE_URL` (postgres URL), `TEST_DATABASE_URL` (optional), `SESSION_SECRET` (min 32 chars), keep `PORT`, `CLIENT_ORIGIN`, `NODE_ENV`. Never echo values.
+- [x] **T1.4** `server/.env.example` and `client/.env.example` with all variables (`00-plan` §8). `scripts/setup.mjs`: when it creates `server/.env`, replace the `SESSION_SECRET=` placeholder with `crypto.randomBytes(32).toString('base64url')`. Keep existing files untouched and never print the secret.
+- [x] **T1.5** `server/src/db/pool.ts`: `pg.Pool`, `withTransaction<T>(fn: (c: PoolClient) => Promise<T>)` (BEGIN/COMMIT/ROLLBACK, always `release()`), and a `ping()` helper.
+- [x] **T1.6** Migration file exactly as in `→ 04 §2`. Scripts: `db:migrate` = `node-pg-migrate up -m migrations --migration-file-language sql`, `db:rollback` = `down`, and `db:status` (list via `node-pg-migrate` dry-run or a small script that reads the `pgmigrations` table). Make sure node-pg-migrate reads `DATABASE_URL` from `server/.env` (dotenv-cli or `--envPath .env`).
+- [x] **T1.7** `server/src/db/fixtures.ts` + `seed.ts` per `→ 04 §4`. Idempotent and production-guarded.
+- [x] **T1.8** `GET /api/health` uses `ping()`. Remove `/api/hello`. Update the existing unit tests accordingly.
+- [x] **T1.9** Root `package.json`: `db:up` → `docker compose up -d --wait postgres`. `compose.yaml` → `postgres:18`, `127.0.0.1:5432:5432`, volume `pg-data`, env `POSTGRES_DB=neostat`, healthcheck `pg_isready`.
 - **Checks:** `npm run db:migrate && npm run db:seed && npm run db:seed` (second run inserts 0). `npm run db:rollback && npm run db:migrate` works. `psql -d neostat -c '\dt'` shows 6 tables (+ `pgmigrations`). `npm run check` passes.
 - **Commit:** `S1: replace MongoDB with PostgreSQL schema, migrations and seed`
 

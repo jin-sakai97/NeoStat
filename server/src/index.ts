@@ -1,16 +1,17 @@
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
-import { connectDatabase, disconnectDatabase, pingDatabase } from "./db/connection.js";
+import { createPool, ping } from "./db/pool.js";
 
+const pool = createPool(env.DATABASE_URL);
 try {
-  await connectDatabase();
-  const app = createApp({ clientOrigin: env.CLIENT_ORIGIN, checkDatabase: pingDatabase });
+  await ping(pool);
+  const app = createApp({ clientOrigin: env.CLIENT_ORIGIN, checkDatabase: () => ping(pool) });
   const server = app.listen(env.PORT, () => {
     console.log(`API listening at http://localhost:${env.PORT}/api`);
   });
   server.on("error", async () => {
     console.error("API could not listen. Check PORT and whether another server is running.");
-    await disconnectDatabase();
+    await pool.end();
     process.exitCode = 1;
   });
 
@@ -21,14 +22,14 @@ try {
     const timeout = setTimeout(() => process.exit(1), 10000);
     timeout.unref();
     server.close(async () => {
-      await disconnectDatabase();
+      await pool.end();
       clearTimeout(timeout);
     });
   };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 } catch {
-  console.error("API startup failed. Check MONGODB_URI and start MongoDB before running the API.");
-  await disconnectDatabase();
+  console.error("API startup failed. Check DATABASE_URL, start PostgreSQL and run db:migrate.");
+  await pool.end();
   process.exitCode = 1;
 }

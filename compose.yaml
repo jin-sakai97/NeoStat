@@ -1,15 +1,20 @@
+# Optional: local PostgreSQL for machines without a native install.
 services:
-  mongodb:
-    image: mongo:8.0
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: neostat
     ports:
-      - "127.0.0.1:27017:27017"
+      - "127.0.0.1:5432:5432"
     volumes:
-      - mongo-data:/data/db
+      - pg-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "neostat"]
       interval: 5s
       timeout: 5s
       retries: 10
 
 volumes:
-  mongo-data:
+  pg-data:

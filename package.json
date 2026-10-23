@@ -20,12 +20,13 @@
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test -w server",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
-    "db:up": "docker compose up -d --wait mongodb",
+    "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
     "db:migrate": "npm run db:migrate -w server",
     "db:rollback": "npm run db:rollback -w server",
     "db:status": "npm run db:status -w server",
-    "db:seed": "npm run db:seed -w server"
+    "db:seed": "npm run db:seed -w server",
+    "test:integration": "npm run test:integration -w server"
   },
   "devDependencies": {
     "concurrently": "^10.0.6"
