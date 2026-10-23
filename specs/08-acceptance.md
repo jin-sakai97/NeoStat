@@ -104,6 +104,20 @@ LC = Legacy CRM (archived).
 | E15 | `GET /tasks/:id/activity` as a non-member / unknown task / viewer | 404 / 404 / 200 | I | P1 |
 | E16 | A stale PATCH (409) and a forbidden PATCH (403) | No activity row | I | P1 |
 
+## G. Notifications — S11
+
+| # | Scenario | Expected | Type | Tier |
+| --- | --- | --- | --- | --- |
+| G1 | Manager creates a task assigned to member@, then PATCHes another task's assignee to member@ | member@ has two unread `TASK_ASSIGNED` from the manager; the manager has none. PATCHing without changing the assignee, or assigning to oneself, adds none | I | P1 |
+| G2 | member2@ comments on a task assigned to member@ | member@ gets `COMMENT_ADDED`. The author gets none. A comment on an unassigned task, or by the assignee, notifies nobody | I | P1 |
+| G3 | Manager adds member2@ to a project | member2@ gets `ADDED_TO_PROJECT` with the project, no task | I | P1 |
+| G4 | Feed isolation | `GET /notifications` and the count only show the caller's rows. `POST /notifications/:id/read` on someone else's or an unknown id → 404 and the row stays unread | I | P1 |
+| G5 | Mark one read, then again; then `read-all` | 204 each time (idempotent); `unread-count` drops accordingly; `?unread=true` lists only unread; `read_at` is not rewritten | I | P1 |
+| G6 | A rejected write (stale PATCH 409, forbidden PATCH 403, comment on an archived project 409) | No notification | I | P1 |
+| G7 | Recipient is removed from the project after being notified | The row still lists, but `task`/`project` are `null` (no names leak). Re-added → names return | I | P1 |
+| G8 | Anonymous request, missing CSRF on a POST, `page=0` | 401, 403, 400 | I | P1 |
+| G9 | Bell shows the unread count, the panel lists the item, selecting it opens the task and clears the badge | | E | P1 |
+
 ## F. Browser and submission — R10–R12
 
 | # | Scenario | Type | Tier |

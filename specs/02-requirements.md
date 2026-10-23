@@ -47,6 +47,8 @@
 
 - Kanban board view of a project's tasks; moving a card is the same versioned status PATCH (`06 §4`, S10).
 
+- In-app notifications: assigned to you, comment on your task, added to a project (`05 §6`, `06 §3`, S11). Polling, no email or push. Due-soon reminders need a scheduler and stay on the roadmap.
+
 ### P2 — roadmap
 
 See `00-plan.md` §12.

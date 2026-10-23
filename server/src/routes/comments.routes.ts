@@ -7,6 +7,7 @@ import { type Actor, type EffectiveRole, canDeleteComment, canWrite } from "../d
 import { forbidden, notFound } from "../http/errors.js";
 import { limitOffset, paginated } from "../http/pagination.js";
 import { commentBody, idParam, pageQuery } from "../http/schemas.js";
+import { notify } from "../repos/notifications.repo.js";
 import { parse } from "../http/validate.js";
 
 type CommentRow = { id: string; task_id: string; author_id: string; author_name: string; author_email: string; body: string; created_at: Date };
@@ -52,6 +53,8 @@ export function commentRoutes(pool: pg.Pool) {
       requireWritable(project);
       const commentId = randomUUID();
       await client.query("INSERT INTO comments (id, task_id, author_id, body) VALUES ($1,$2,$3,$4)", [commentId, id, actor.id, body]);
+      const assignee = await client.query<{ assignee_id: string | null }>("SELECT assignee_id FROM tasks WHERE id = $1", [id]);
+      if (assignee.rows[0]?.assignee_id) await notify(client, { userId: assignee.rows[0].assignee_id, actorId: actor.id, kind: "COMMENT_ADDED", taskId: id });
       const { rows } = await client.query<CommentRow>(`${SELECT_COMMENT} WHERE c.id = $1`, [commentId]);
       return toCommentDTO(rows[0], actor, role, false);
     });

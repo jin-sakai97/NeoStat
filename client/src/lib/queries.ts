@@ -3,7 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, isApiError } from "./api";
 import { useUser } from "./auth";
-import type { Candidate, Comment, Dashboard, Member, Paginated, Project, Task, TaskActivity, User } from "./types";
+import type { Candidate, Comment, Dashboard, Member, Notification, Paginated, Project, Task, TaskActivity, User } from "./types";
 
 type Query = Record<string, string | number | boolean | undefined | null>;
 type One<T> = { data: T };
@@ -62,6 +62,17 @@ export function useTaskActivity(taskId: string, pageSize: number) {
   });
 }
 
+// The unread badge polls; the list is only fetched while the panel is open.
+export function useUnreadCount() {
+  const queryKey = useKey("notifications", "count");
+  return useQuery({ queryKey, queryFn: () => api<One<{ count: number }>>("/notifications/unread-count").then((r) => r.data.count), refetchInterval: POLL_MS });
+}
+
+export function useNotifications(enabled: boolean) {
+  const queryKey = useKey("notifications", "list");
+  return useQuery({ queryKey, enabled, queryFn: () => api<Paginated<Notification>>("/notifications", { query: { pageSize: 20 } }), refetchInterval: enabled ? POLL_MS : false });
+}
+
 export function useMembers(projectId: string, options: { assignable?: boolean; enabled?: boolean } = {}) {
   const queryKey = useKey("members", projectId, options.assignable ?? false);
   return useQuery({
@@ -86,7 +97,7 @@ export function useUsers(query: Query, enabled = true) {
 }
 
 // Mutations: no retries, wait for the server, then invalidate the related resource families.
-type Family = "dashboard" | "projects" | "project" | "tasks" | "task" | "activity" | "comments" | "members" | "candidates" | "users";
+type Family = "dashboard" | "projects" | "project" | "tasks" | "task" | "activity" | "notifications" | "comments" | "members" | "candidates" | "users";
 
 export function useApiMutation<TVars, TResult = unknown>(fn: (vars: TVars) => Promise<TResult>, invalidate: Family[]) {
   const queryClient = useQueryClient();

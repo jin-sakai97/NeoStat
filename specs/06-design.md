@@ -123,6 +123,23 @@ Mobile < 768px (target 390px)
 └──────────────────────────────┘
 ```
 
+**Notifications bell (S11).** A `Bell` button in the sidebar footer row (desktop) and the mobile top
+bar, left of the avatar. A badge shows the unread count (`99+` cap, hidden at 0), polled every
+30 s (`GET /notifications/unread-count`). The button's accessible name is "Notifications, N unread".
+It opens a dropdown panel (max-height with inner scroll) listing the latest 20:
+
+```text
+Notifications                                   [Mark all read]
+● Priya Manager assigned you "Write checklist"        5 min ago
+● Kabir Member commented on "Design hero"             1 h ago
+  Priya Manager added you to Website Redesign         2 d ago
+```
+
+- Unread rows have a dot and `bg-muted`; read rows are plain. Selecting a row marks it read and
+  goes to `/tasks/:id` (or `/projects/:id/tasks` for project additions).
+- Empty state: "You're all caught up." Error state: a Retry link inside the panel.
+- Names that are no longer visible read "a task you can no longer access" and are not links.
+
 Nav icons (Lucide): `LayoutDashboard`, `FolderKanban`, `ListChecks`, `Users`, `UserCircle`,
 `LogOut`. The active item has a `bg-muted` background, `--primary` text and a 2px left indicator.
 

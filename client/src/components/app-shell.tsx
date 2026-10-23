@@ -4,6 +4,7 @@ import { FolderKanban, LayoutDashboard, ListChecks, LogOut, Menu, UserCircle, Us
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
+import { NotificationBell } from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -69,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="fixed inset-y-0 left-0 hidden w-[232px] flex-col border-r bg-card px-3 py-4 lg:flex">
         <div className="mb-6 px-3"><Logo /></div>
         <NavLinks />
-        <div className="mt-auto border-t pt-3"><UserMenu /></div>
+        <div className="mt-auto flex items-center gap-1 border-t pt-3"><div className="min-w-0 flex-1"><UserMenu /></div><NotificationBell /></div>
       </aside>
       <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-card px-4 py-2 lg:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
@@ -81,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SheetContent>
         </Sheet>
         <Logo />
-        <span className="w-8" />
+        <NotificationBell />
       </header>
       <main className="mx-auto max-w-[1200px] px-4 py-6 lg:px-6">{children}</main>
     </div>

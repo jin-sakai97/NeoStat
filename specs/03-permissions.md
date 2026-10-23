@@ -194,6 +194,24 @@ Rules:
   `23503` → 400 VALIDATION_ERROR).
 - Connection errors → 503 `DB_UNAVAILABLE`. No automatic retries of user mutations.
 
+### Notifications (S11)
+
+- A notification is private to its recipient: every query filters `user_id = actor.id`, and marking
+  someone else's notification read returns **404**, never 403. There is no role gate: every
+  signed-in user has a feed.
+- Task and project **names** inside a notification are shown only while the recipient can still see
+  that task/project (Admin, or a member of a non-deleted project). Otherwise the DTO carries `null`
+  and the UI says "a task you can no longer access". Nothing is deleted, so access coming back
+  restores the names.
+- Notifications are written **last** in the transaction that causes them, after every lock in the
+  order above, and only if the change committed. A rejected write (403, 409, validation) creates
+  none. The only extra locks are foreign-key `KEY SHARE` locks on the recipient/task/project rows,
+  which conflict only with `FOR UPDATE` on `users` (rank 1). That lock is held by deactivation and
+  role changes, which never wait on anything a notification writer holds while it waits on the
+  user row, so no cycle exists.
+- Nobody is notified about their own actions. The unassign cleanup (member removed, user
+  deactivated) creates no notification.
+
 ## 7. Task mutation algorithm (PATCH /tasks/:id)
 
 ```

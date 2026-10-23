@@ -5,6 +5,7 @@ import { type Db, withTransaction } from "../db/pool.js";
 import { AppError, forbidden, notFound, validationError } from "../http/errors.js";
 import type { createProjectBody, updateProjectBody } from "../http/schemas.js";
 import { getProjectDTO } from "../repos/projects.repo.js";
+import { notify } from "../repos/notifications.repo.js";
 import { findUserById } from "../repos/users.repo.js";
 import { freshActor, projectAccess, requireWritable, unassignTasks } from "./access.js";
 import { type ProjectRole, ROLE_CEILING, canManage } from "./policy.js";
@@ -136,6 +137,7 @@ export async function addMember(pool: pg.Pool, actorId: string, projectId: strin
     );
     if (rowCount === 0) throw new AppError(409, "MEMBER_EXISTS", "This user is already a member of the project.");
     await touch(client, projectId);
+    await notify(client, { userId, actorId: actor.id, kind: "ADDED_TO_PROJECT", projectId });
   });
 }
 

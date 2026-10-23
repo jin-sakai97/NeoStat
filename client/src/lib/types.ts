@@ -48,6 +48,12 @@ export interface TaskActivity {
   changes: Partial<Record<TaskField, { from: ActivityValue; to: ActivityValue }>>;
 }
 
+export interface Notification {
+  id: string; kind: "TASK_ASSIGNED" | "COMMENT_ADDED" | "ADDED_TO_PROJECT"; actor: UserSummary;
+  task: { id: string; title: string } | null; project: { id: string; name: string } | null;
+  readAt: string | null; createdAt: string;
+}
+
 export interface Dashboard {
   activeProjectCount: number;
   taskCounts: { todo: number; inProgress: number; done: number };

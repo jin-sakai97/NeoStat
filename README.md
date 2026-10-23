@@ -192,8 +192,8 @@ generic 500 messages.
 | Suite | Command | Result (2026-10-23) |
 | --- | --- | --- |
 | Unit (policy matrix, password hashing, app errors/CORS) | `npm test` | **9 / 9 pass** |
-| Integration (real PostgreSQL: auth, rate limit, password change, CSRF, permission matrix, lifecycle, concurrency, validation) | `npm run test:integration` | **39 / 39 pass** |
-| Browser (conflict flow, per-field picker, task history, Kanban board, viewer read-only) | `npm run test:e2e` | **8 / 8 pass** on a freshly seeded database |
+| Integration (real PostgreSQL: auth, rate limit, password change, CSRF, permission matrix, lifecycle, concurrency, history, notifications, validation) | `npm run test:integration` | **47 / 47 pass** |
+| Browser (conflict flow, per-field picker, task history, Kanban board, notifications, viewer read-only) | `npm run test:e2e` | **11 / 11 pass** on a freshly seeded database |
 | Lint + typecheck + production builds | `npm run check` | **pass** |
 
 Highlights: two simultaneous same-version updates produce exactly one 200 and one 409; a
@@ -213,7 +213,8 @@ other in parallel leave exactly one admin.
   changes are not audited yet.
 - The board shows up to 100 tasks per project (filters and the list view cover the rest); cards move by
   drag and drop (mouse) or the Move to menu (keyboard, touch).
-- Roadmap: wider audit history, SSE notifications, labels,
+- Notifications are in-app only (polled every 30 s): no email or push, and no due-soon reminders yet.
+- Roadmap: wider audit history, due-soon reminders, live (SSE) updates, labels,
   multiple managers. See [`specs/00-plan.md`](specs/00-plan.md) §12.
 
 ## AI assistance

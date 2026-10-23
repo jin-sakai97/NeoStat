@@ -131,6 +131,16 @@ Build in this order. Each service follows the lock order in `→ 03 §6`.
 - [x] **T10.5** e2e `board.spec.ts` (creates its own project and tasks through the API, so it does not depend on seed data).
 - [x] **T10.6** Checks, verification log, README, commit `S10: add kanban board view`, push.
 
+## S11 — Notifications (P1 follow-up)
+
+- [x] **T11.1** Spec: `02`, `03 §Notifications`, `04 §2b`, `05`, `06 §3`, `08` G1–G8 (this section).
+- [x] **T11.2** Migration `1761400000000_notifications.sql`; `repos/notifications.repo.ts` (`notify`, `listNotifications`, `unreadCount`, `markRead`, `markAllRead`).
+- [x] **T11.3** Write notifications in `createTask`, `updateTask`, comment create and `addMember` (last step of each transaction).
+- [x] **T11.4** `routes/notifications.routes.ts`, mounted behind `loadActor`.
+- [x] **T11.5** Integration tests G1–G8.
+- [x] **T11.6** Client: types, `useNotifications`/`useUnreadCount`, `NotificationBell` in `app-shell.tsx`, read mutations.
+- [x] **T11.7** e2e `notifications.spec.ts`; checks; verification log; README; commit `S11: add in-app notifications`; push.
+
 ---
 
 ## Definition of done (whole project)

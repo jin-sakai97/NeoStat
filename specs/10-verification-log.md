@@ -169,6 +169,33 @@ check was skipped, say so.
 - Commands: `npm run check` ✅ · `npm run test:integration` → 39 pass / 0 fail · `playwright test` → **8 / 8 pass**.
 - Other observations: the 401 in the browser console is the expected pre-login `/auth/me`.
 
+### 2026-10-23 — S11 In-app notifications
+
+- Spec first: `02` P1 line, `03 §Notifications` (privacy, name visibility, write order, lock note),
+  `04 §2b`, `05` (4 endpoints + `Notification` DTO), `06 §3` (bell), `08` G1–G9.
+- Migration `1761400000000_notifications.sql` (applied to `neostat`, additive). Written last in the
+  transaction that causes them: task create/assign (`TASK_ASSIGNED`), comment on an assigned task
+  (`COMMENT_ADDED`), member added (`ADDED_TO_PROJECT`). Never for the actor's own action; the unassign
+  cleanup creates none; rejected writes create none (the transaction rolls back).
+- Endpoints: `GET /notifications` (paginated, `?unread=true`), `GET /notifications/unread-count`,
+  `POST /notifications/:id/read` (idempotent, 404 for someone else's), `POST /notifications/read-all`.
+  Task/project names are returned only while the recipient can still see them (Admin, or member of a
+  non-deleted project); otherwise `null`.
+- Client: `NotificationBell` in the sidebar footer (desktop) and the mobile top bar; badge polls every 30 s,
+  the list loads only while the panel is open; rows mark read and navigate; Mark all read.
+- Integration (`notifications.test.ts`, G1–G8): 8 new tests. Mutation check: removing the self-notify guard
+  fails G1 and G2 (and the DB `CHECK (user_id <> actor_id)`), returning names without the visibility check
+  fails G7.
+- e2e (`notifications.spec.ts`, G9): bell count, panel items, open task, badge drops, Mark all read keeps items
+  listed; names hidden after the member is removed; 390px bell and panel stay on screen. Helpers moved to
+  `e2e/helpers.ts` (shared with `board.spec.ts`).
+- Commands: `npm run check` ✅ · `npm test` 9/9 · `npm run test:integration` → **47 pass / 0 fail** ·
+  `playwright test` → **11 / 11 pass**, twice in a row, on a freshly seeded `neostat_test`. One earlier full run
+  had a single failure in `history.spec.ts` (page still empty at the 5 s assertion): Next dev compiling a route
+  on first visit while three specs ran in parallel. It did not recur in two further full runs.
+- Not covered: due-soon reminders (need a scheduler, stay on the roadmap), email/push, retention of old
+  notifications, real-device touch.
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

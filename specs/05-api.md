@@ -140,6 +140,13 @@ interface TaskActivity {
   changes: Partial<Record<TaskField, { from: string | { id: string; name: string } | null;
                                        to: string | { id: string; name: string } | null }>>;
 }
+interface Notification {
+  id: string; kind: "TASK_ASSIGNED" | "COMMENT_ADDED" | "ADDED_TO_PROJECT";
+  actor: UserSummary;
+  task: { id: string; title: string } | null;      // null if not applicable or no longer visible
+  project: { id: string; name: string } | null;    // same rule
+  readAt: string | null; createdAt: string;
+}
 interface Dashboard {
   activeProjectCount: number;
   taskCounts: { todo: number; inProgress: number; done: number };
@@ -227,6 +234,17 @@ project), `sort?` (`updatedAt|title|dueDate|priority|status`, default `updatedAt
 | DELETE `/comments/:id` | author (PM/TM role now), manager, Admin | — | 204 | 403, 409 PROJECT_ARCHIVED |
 
 Comment operations never change `tasks.version` or `tasks.updated_at`.
+
+### Notifications
+
+| Method & path | Auth | Request | Success | Errors |
+| --- | --- | --- | --- | --- |
+| GET `/notifications` | session | query `unread? (true), page?, pageSize?` | 200 paginated `Notification[]`, createdAt desc, id (own only) | |
+| GET `/notifications/unread-count` | session | — | 200 `{data:{count}}` | |
+| POST `/notifications/:id/read` | session + CSRF | — | 204 (idempotent) | 404 not yours / unknown |
+| POST `/notifications/read-all` | session + CSRF | — | 204 | |
+
+`read-all` marks only the caller's unread notifications. Visibility rule for names: `03 §Notifications`.
 
 ## 7. Example: conflict
 

@@ -5,6 +5,7 @@ import { type Db, withTransaction } from "../db/pool.js";
 import { AppError, forbidden, notFound, validationError } from "../http/errors.js";
 import type { createTaskBody, updateTaskBody } from "../http/schemas.js";
 import { diffTask, recordActivity } from "../repos/activity.repo.js";
+import { notify } from "../repos/notifications.repo.js";
 import { type TaskRow, getTaskDTO } from "../repos/tasks.repo.js";
 import { freshActor, projectAccess, requireWritable, taskProjectId } from "./access.js";
 import { type Actor, type TaskField, canManage, editableTaskFields } from "./policy.js";
@@ -38,6 +39,7 @@ export async function createTask(pool: pg.Pool, actorId: string, projectId: stri
       [id, projectId, input.title, input.description, input.status, input.priority, input.assigneeId, input.dueDate, actor.id],
     );
     await recordActivity(client, { taskId: id, actorId: actor.id, kind: "CREATED", version: 1 });
+    if (input.assigneeId) await notify(client, { userId: input.assigneeId, actorId: actor.id, kind: "TASK_ASSIGNED", taskId: id });
     await client.query("UPDATE projects SET updated_at = now() WHERE id = $1", [projectId]);
     return getTaskDTO(client, actor, id);
   });
@@ -85,6 +87,8 @@ export async function updateTask(pool: pg.Pool, actorId: string, taskId: string,
     if (rowCount === 0) throw await conflict(client, actor, taskId);
     const changed = await diffTask(client, task, changes);
     if (Object.keys(changed).length) await recordActivity(client, { taskId, actorId: actor.id, kind: "UPDATED", changes: changed, version: version + 1 });
+    const newAssignee = changed.assigneeId?.to;
+    if (newAssignee && typeof newAssignee === "object") await notify(client, { userId: newAssignee.id, actorId: actor.id, kind: "TASK_ASSIGNED", taskId });
     await client.query("UPDATE projects SET updated_at = now() WHERE id = $1", [task.project_id]);
     return getTaskDTO(client, actor, taskId);
   });

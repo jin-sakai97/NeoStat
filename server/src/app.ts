@@ -10,6 +10,7 @@ import { sessionMiddleware } from "./http/session.js";
 import { authRoutes, sessionRoutes } from "./routes/auth.routes.js";
 import { commentRoutes } from "./routes/comments.routes.js";
 import { dashboardRoutes } from "./routes/dashboard.routes.js";
+import { notificationRoutes } from "./routes/notifications.routes.js";
 import { projectRoutes } from "./routes/projects.routes.js";
 import { taskRoutes } from "./routes/tasks.routes.js";
 import { userRoutes } from "./routes/users.routes.js";
@@ -54,6 +55,7 @@ export function createApp({ pool, clientOrigin, sessionSecret, secureCookies = f
   app.use("/api", projectRoutes(pool));
   app.use("/api", taskRoutes(pool));
   app.use("/api", commentRoutes(pool));
+  app.use("/api", notificationRoutes(pool));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

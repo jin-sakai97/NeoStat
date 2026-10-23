@@ -149,6 +149,36 @@ Rules:
   (cascade). Seed tasks start with no history; the UI says so.
 - Project, membership and user lifecycle audit stay on the roadmap (`00-plan.md` §12).
 
+### 2b. Migration `server/migrations/1761400000000_notifications.sql` (S11)
+
+```sql
+-- Up Migration
+
+CREATE TABLE notifications (
+  id         uuid PRIMARY KEY,
+  user_id    uuid NOT NULL REFERENCES users (id) ON DELETE RESTRICT,   -- recipient
+  actor_id   uuid NOT NULL REFERENCES users (id) ON DELETE RESTRICT,   -- who caused it
+  kind       text NOT NULL CHECK (kind IN ('TASK_ASSIGNED','COMMENT_ADDED','ADDED_TO_PROJECT')),
+  task_id    uuid REFERENCES tasks (id) ON DELETE CASCADE,
+  project_id uuid REFERENCES projects (id) ON DELETE CASCADE,
+  read_at    timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (user_id <> actor_id),
+  CHECK ((kind = 'ADDED_TO_PROJECT' AND project_id IS NOT NULL) OR (kind <> 'ADDED_TO_PROJECT' AND task_id IS NOT NULL))
+);
+CREATE INDEX notifications_user_idx   ON notifications (user_id, created_at DESC, id);
+CREATE INDEX notifications_unread_idx ON notifications (user_id) WHERE read_at IS NULL;
+
+-- Down Migration
+
+DROP TABLE notifications;
+```
+
+Rules: `TASK_ASSIGNED` when a task is created with, or PATCHed to, an assignee other than the actor
+(recipient = the new assignee). `COMMENT_ADDED` when someone else comments on a task that has an
+assignee (recipient = the assignee). `ADDED_TO_PROJECT` when someone else adds a member
+(recipient = the new member). Deleting a task or project cascades. No retention job yet.
+
 ## 3. Key queries (for explanation)
 
 **Visible projects for an actor** (the scoped query used by lists, counts and the dashboard):
