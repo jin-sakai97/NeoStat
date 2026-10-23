@@ -91,7 +91,7 @@ Build in this order. Each service follows the lock order in `→ 03 §6`.
 - [x] **T5.5** Project dialogs: new project (Admin), edit details, archive/restore/delete confirms.
 - [x] **T5.6** `/users`: table, filters, create/edit dialog, deactivate/reactivate confirm, readable 409 messages.
 - [x] **T5.7** `/profile`.
-- [ ] **T5.8** *(P1)* Per-field Latest/Mine picker. (Mobile nav sheet ✅ done.)
+- [x] **T5.8** *(P1)* Per-field Latest/Mine picker: radios appear only for fields both people changed; Mine is the default. (Mobile nav sheet ✅ done.)
 - **Checks:** `npm run check`. Run the two-browser conflict demo by hand (`08` §F1).
 - **Commit:** `S5: add team, user admin, comments and conflict resolution UI`
 
@@ -103,6 +103,7 @@ Build in this order. Each service follows the lock order in `→ 03 §6`.
 - [x] **T6.4** Fresh DB check: `DROP`/recreate `neostat_test` → migrate → seed twice → tests pass.
 - [x] **T6.5** *(P1)* Playwright `conflict.spec.ts` with two contexts. *(P1)* Screenshots.
 - [x] **T6.6** Fix everything found. Re-run all checks.
+- [x] **T6.7** *(P1 follow-up)* Login rate limit (A8) in `routes/auth.routes.ts`, `POST /profile/password`, 30 s list polling in `lib/queries.ts`, password form on `/profile`.
 - **Commit:** `S6: complete acceptance tests and fixes`
 
 ## S7 — Submission (175–180 min) · R12

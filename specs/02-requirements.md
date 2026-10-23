@@ -32,14 +32,15 @@
 
 ### P1 — if P0 passes with time left
 
-- Login rate limit (10 failed attempts / IP / 15 min → 429).
+- Login rate limit (10 failed attempts / IP / 15 min → 429). ✅ done
 
-- Per-field Latest/Mine picker in the conflict dialog.
+- Per-field Latest/Mine picker in the conflict dialog. ✅ done
 - One Playwright test: two contexts, conflict appears, draft is preserved.
-- 30-second background refetch for visible lists (window-focus refetch is P0 because it is free).
+- 30-second background refetch for visible lists (window-focus refetch is P0 because it is free). ✅ done (lists only; single-task detail is not polled so an open edit form never changes underneath the user)
 - Desktop and mobile screenshots in the README.
 - Account-role change returning `ROLE_CONFLICT` with the blocking projects listed in the UI
-  (the API check itself is P0).
+  (the API check itself is P0). ✅ done: `ConflictMessage` in `components/users/user-dialogs.tsx` links each blocking project
+- Change own password (`POST /profile/password`, see `05-api.md`). ✅ done
 - Mobile navigation sheet (P0 fallback: the sidebar collapses to a top bar with links).
 
 ### P2 — roadmap

@@ -9,11 +9,60 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useUser } from "@/lib/auth";
 import { ACCOUNT_ROLE_LABEL } from "@/lib/format";
 import { useApiMutation, useProjects } from "@/lib/queries";
 import type { User } from "@/lib/types";
+
+function PasswordForm() {
+  const [values, setValues] = useState({ currentPassword: "", newPassword: "", confirm: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const change = useApiMutation((body: { currentPassword: string; newPassword: string }) => api("/profile/password", { method: "POST", body }), []);
+  const set = (key: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement>) => setValues((v) => ({ ...v, [key]: e.target.value }));
+
+  const fields = [
+    { key: "currentPassword", label: "Current password", autoComplete: "current-password" },
+    { key: "newPassword", label: "New password", autoComplete: "new-password", hint: "8–128 characters." },
+    { key: "confirm", label: "Confirm new password", autoComplete: "new-password" },
+  ] as const;
+
+  return (
+    <section className="rounded-lg border bg-card p-4">
+      <h2 className="mb-1 font-semibold">Change password</h2>
+      <p className="mb-4 text-sm text-muted-foreground">You&apos;ll stay signed in here. Other devices are signed out.</p>
+      <form className="space-y-4" noValidate onSubmit={(event) => {
+        event.preventDefault();
+        const local: Record<string, string> = {};
+        if (!values.currentPassword) local.currentPassword = "Enter your current password.";
+        if (values.newPassword.length < 8) local.newPassword = "Use at least 8 characters.";
+        else if (values.newPassword !== values.confirm) local.confirm = "Passwords don't match.";
+        setErrors(local);
+        if (Object.keys(local).length) return;
+        change.mutate({ currentPassword: values.currentPassword, newPassword: values.newPassword }, {
+          onSuccess: () => { setValues({ currentPassword: "", newPassword: "", confirm: "" }); toast.success("Password changed"); },
+          onError: (e) => {
+            if (e instanceof ApiError && Object.keys(e.fieldErrors).length) {
+              setErrors(Object.fromEntries(Object.entries(e.fieldErrors).map(([k, v]) => [k, v[0]])));
+            } else setErrors({ form: e.message });
+          },
+        });
+      }}>
+        {fields.map(({ key, label, autoComplete, ...rest }) => (
+          <div key={key} className="space-y-1.5">
+            <Label htmlFor={`pw-${key}`}>{label}</Label>
+            <Input id={`pw-${key}`} type="password" className="h-9" maxLength={128} autoComplete={autoComplete} value={values[key]} onChange={set(key)}
+              aria-invalid={!!errors[key]} aria-describedby={errors[key] ? `pw-${key}-error` : undefined} />
+            {errors[key] ? <p id={`pw-${key}-error`} className="text-sm text-destructive">{errors[key]}</p>
+              : "hint" in rest && <p className="text-xs text-muted-foreground">{rest.hint}</p>}
+          </div>
+        ))}
+        {errors.form && <p role="alert" className="text-sm text-destructive">{errors.form}</p>}
+        <Button type="submit" disabled={change.isPending}>{change.isPending ? "Changing…" : "Change password"}</Button>
+      </form>
+    </section>
+  );
+}
 
 export default function ProfilePage() {
   const user = useUser();
@@ -64,6 +113,7 @@ export default function ProfilePage() {
             </ul>
           ) : <p className="text-sm text-muted-foreground">{projects.isPending ? "Loading…" : "No active projects."}</p>}
         </section>
+        <PasswordForm />
       </div>
     </>
   );

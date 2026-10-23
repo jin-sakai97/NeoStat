@@ -87,6 +87,24 @@ check was skipped, say so.
 - Remaining manual checks for the participant: full keyboard pass (F3) and the F1 demo script.
 - Open P1: login rate limit (A8), per-field conflict picker (T5.8).
 
+### 2026-10-23 — P1 follow-ups
+
+- Spec first: `05-api.md` gained `POST /profile/password` and the injectable `loginAttemptLimit`.
+- Login rate limit (A8): `express-rate-limit`, failed attempts only, 429 `RATE_LIMITED`. Test A8 uses an
+  app with limit 3 → 2 logins ✅, 3 wrong passwords → 401, next attempt → 429.
+- Password change: wrong current password → 400 `fieldErrors.currentPassword`; same, short or extra-field
+  bodies → 400; success → 204, other sessions 401, calling session stays valid, old password rejected.
+- 30 s polling on dashboard, project, task and comment lists and members (`refetchInterval`).
+- Per-field Latest/Mine picker (T5.8) in the conflict dialog; e2e `T5.8` passes.
+- ROLE_CONFLICT UI: already present (`ConflictMessage` lists and links the blocking projects); recorded
+  as done, no code change.
+- Commands: `npm run check` ✅ · `npm run test:integration` → **32 pass / 0 fail**.
+- `npm run test:e2e` → 2 pass (D8/D10, T5.8), 1 fail: "Viewers get a read-only task". Cause: the
+  development database has no `VIEWER` membership for `viewer@neostat.test` in Website Redesign (seed
+  fixture `fixtures.ts:33`; the dev DB only has Mobile App Launch), so the task returns 404. Not caused by
+  these changes; dev data left untouched.
+- Still open: T6.2 and T6.3 (manual checks by the participant), README screenshots.
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

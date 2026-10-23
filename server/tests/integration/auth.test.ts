@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import request from "supertest";
-import { users } from "../../src/db/fixtures.js";
-import { anonymous, app, loginAs, pool, resetDatabase } from "./helpers.js";
+import { createApp } from "../../src/app.js";
+import { DEMO_PASSWORD, users } from "../../src/db/fixtures.js";
+import { anonymous, app, CLIENT_ORIGIN, loginAs, pool, resetDatabase } from "./helpers.js";
 
 before(resetDatabase);
 after(() => pool.end());
@@ -62,4 +63,39 @@ test("A10: user payloads never expose credentials; profile updates the name only
   const text = JSON.stringify(res.body) + JSON.stringify((await viewer.get("/auth/me")).body);
   assert.doesNotMatch(text, /password|hash|auth_?version/i);
   await viewer.patch("/profile", { name: "x", role: "ADMIN" }).expect(400);
+});
+
+test("A8: failed logins are rate limited per IP; successful logins do not count", async () => {
+  const limited = createApp({ pool, clientOrigin: CLIENT_ORIGIN, sessionSecret: "integration-test-secret-0123456789abcdef", loginAttemptLimit: 3 });
+  // A fresh agent per attempt: a successful login rotates the session's CSRF token.
+  const login = async (password: string) => {
+    const agent = request.agent(limited);
+    const { body } = await agent.get("/api/auth/csrf").expect(200);
+    return agent.post("/api/auth/login").set("X-CSRF-Token", body.data.csrfToken).send({ email: "admin@neostat.test", password });
+  };
+  for (let i = 0; i < 2; i++) assert.equal((await login(DEMO_PASSWORD)).status, 200);
+  for (let i = 0; i < 3; i++) assert.equal((await login("wrong-pass")).status, 401);
+  const blocked = await login(DEMO_PASSWORD);
+  assert.equal(blocked.status, 429);
+  assert.equal(blocked.body.error.code, "RATE_LIMITED");
+});
+
+test("Password change: wrong current password is rejected, success revokes other sessions only", async () => {
+  const email = "member2@neostat.test";
+  const first = await loginAs(email);
+  const second = await loginAs(email);
+  const newPassword = "A-brand-new-pass-1";
+
+  const wrong = await first.post("/profile/password", { currentPassword: "nope-nope", newPassword }).expect(400);
+  assert.deepEqual(Object.keys(wrong.body.error.fieldErrors), ["currentPassword"]);
+  await first.post("/profile/password", { currentPassword: DEMO_PASSWORD, newPassword: DEMO_PASSWORD }).expect(400);
+  await first.post("/profile/password", { currentPassword: DEMO_PASSWORD, newPassword: "short" }).expect(400);
+  await first.post("/profile/password", { currentPassword: DEMO_PASSWORD, newPassword, extra: 1 }).expect(400);
+
+  await first.post("/profile/password", { currentPassword: DEMO_PASSWORD, newPassword }).expect(204);
+  await first.get("/auth/me").expect(200);
+  await second.get("/auth/me").expect(401);
+  const anon = await anonymous();
+  await anon.post("/auth/login", { email, password: DEMO_PASSWORD }).expect(401);
+  await anon.post("/auth/login", { email, password: newPassword }).expect(200);
 });

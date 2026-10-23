@@ -19,10 +19,11 @@ type AppOptions = {
   clientOrigin: string;
   sessionSecret: string;
   secureCookies?: boolean;
+  loginAttemptLimit?: number;
   checkDatabase?: () => Promise<void>;
 };
 
-export function createApp({ pool, clientOrigin, sessionSecret, secureCookies = false, checkDatabase = () => ping(pool) }: AppOptions) {
+export function createApp({ pool, clientOrigin, sessionSecret, secureCookies = false, loginAttemptLimit = 10, checkDatabase = () => ping(pool) }: AppOptions) {
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", false);
@@ -45,7 +46,7 @@ export function createApp({ pool, clientOrigin, sessionSecret, secureCookies = f
 
   app.use("/api", sessionMiddleware(pool, sessionSecret, secureCookies));
   app.use("/api", csrfProtection(clientOrigin));
-  app.use("/api", authRoutes(pool));
+  app.use("/api", authRoutes(pool, loginAttemptLimit));
   app.use("/api", loadActor(pool));
   app.use("/api", sessionRoutes(pool));
   app.use("/api", dashboardRoutes(pool));

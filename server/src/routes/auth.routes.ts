@@ -1,10 +1,12 @@
 import { Router, type Request } from "express";
+import { rateLimit } from "express-rate-limit";
 import type pg from "pg";
 import { z } from "zod";
 import { hashPassword, verifyPassword } from "../domain/passwords.js";
-import { AppError, unauthenticated } from "../http/errors.js";
+import { AppError, unauthenticated, validationError } from "../http/errors.js";
 import { newCsrfToken } from "../http/csrf.js";
 import { SESSION_COOKIE, SESSION_LIFETIME_MS } from "../http/session.js";
+import { password as newPasswordSchema } from "../http/schemas.js";
 import { parse } from "../http/validate.js";
 import { findUserByEmail, findUserById, toUserDTO } from "../repos/users.repo.js";
 
@@ -19,7 +21,19 @@ const dummyHash = hashPassword("timing-equalizer-password");
 const regenerate = (req: Request) => new Promise<void>((resolve, reject) => req.session.regenerate((error) => (error ? reject(error) : resolve())));
 const save = (req: Request) => new Promise<void>((resolve, reject) => req.session.save((error) => (error ? reject(error) : resolve())));
 
-export function authRoutes(pool: pg.Pool) {
+// Failed attempts only (successful logins are skipped), per IP, in a 15-minute window.
+const tooManyAttempts = () => new AppError(429, "RATE_LIMITED", "Too many failed sign-in attempts. Try again in a few minutes.");
+export const failedAttemptLimiter = (limit: number) =>
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit,
+    skipSuccessfulRequests: true,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    handler: (_req, _res, next) => next(tooManyAttempts()),
+  });
+
+export function authRoutes(pool: pg.Pool, loginAttemptLimit = 10) {
   const router = Router();
 
   router.get("/auth/csrf", async (req, res) => {
@@ -30,7 +44,7 @@ export function authRoutes(pool: pg.Pool) {
     res.json({ data: { csrfToken: req.session.csrfToken } });
   });
 
-  router.post("/auth/login", async (req, res) => {
+  router.post("/auth/login", failedAttemptLimiter(loginAttemptLimit), async (req, res) => {
     const { email, password } = parse(loginSchema, req.body);
     const user = await findUserByEmail(pool, email);
     const valid = await verifyPassword(password, user?.password_hash ?? (await dummyHash));
@@ -48,6 +62,8 @@ export function authRoutes(pool: pg.Pool) {
 
   return router;
 }
+
+const passwordChangeSchema = z.strictObject({ currentPassword: z.string().min(1).max(128), newPassword: newPasswordSchema });
 
 // Routes below require loadActor.
 export function sessionRoutes(pool: pg.Pool) {
@@ -72,6 +88,26 @@ export function sessionRoutes(pool: pg.Pool) {
       [req.actor!.id, name],
     );
     res.json({ data: toUserDTO(rows[0]) });
+  });
+
+  router.post("/profile/password", async (req, res) => {
+    const { currentPassword, newPassword } = parse(passwordChangeSchema, req.body);
+    const user = await findUserById(pool, req.actor!.id);
+    if (!user) throw unauthenticated();
+    if (!(await verifyPassword(currentPassword, user.password_hash))) {
+      throw validationError({ currentPassword: ["Current password is incorrect."] });
+    }
+    if (currentPassword === newPassword) {
+      throw validationError({ newPassword: ["Choose a password different from the current one."] });
+    }
+    // Bumping auth_version revokes every other session; keep this one signed in.
+    const { rows } = await pool.query(
+      "UPDATE users SET password_hash = $2, auth_version = auth_version + 1, updated_at = now() WHERE id = $1 RETURNING auth_version",
+      [user.id, await hashPassword(newPassword)],
+    );
+    req.session.authVersion = rows[0].auth_version;
+    await save(req);
+    res.status(204).end();
   });
 
   return router;

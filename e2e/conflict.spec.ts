@@ -45,6 +45,27 @@ test("D8/D10: a stale save shows the conflict dialog and keeps the draft until t
   await expect(manager.getByLabel("Title")).toHaveValue(`Member edit ${stamp}`);
 });
 
+test("T5.8: the conflict dialog lets the user keep the latest value for a field both people changed", async ({ browser }) => {
+  const stamp = Date.now();
+  const manager = await signIn(browser, "manager@neostat.test");
+  const member = await signIn(browser, "member@neostat.test");
+  await manager.goto(DEMO_TASK);
+  await member.goto(DEMO_TASK);
+
+  await manager.getByLabel("Title").fill(`Theirs ${stamp}`);
+  await member.getByLabel("Title").fill(`Mine ${stamp}`);
+  await manager.getByRole("button", { name: "Save changes" }).click();
+  await expect(manager.getByText("Task saved")).toBeVisible();
+
+  await member.getByRole("button", { name: "Save changes" }).click();
+  const dialog = member.getByRole("dialog", { name: "This task was changed by someone else" });
+  await expect(dialog.getByRole("radio", { name: "Keep my Title" })).toBeChecked();
+  await dialog.getByRole("radio", { name: "Keep latest Title" }).check();
+  await dialog.getByRole("button", { name: "Re-apply my changes" }).click();
+  await expect(member.getByLabel("Title")).toHaveValue(`Theirs ${stamp}`);
+  await expect(member.getByRole("button", { name: "Save changes" })).toBeDisabled();
+});
+
 test("Viewers get a read-only task with no comment box", async ({ browser }) => {
   const viewer = await signIn(browser, "viewer@neostat.test");
   await viewer.goto(DEMO_TASK);

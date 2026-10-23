@@ -8,6 +8,10 @@ import type { Candidate, Comment, Dashboard, Member, Paginated, Project, Task, U
 type Query = Record<string, string | number | boolean | undefined | null>;
 type One<T> = { data: T };
 
+// Visible lists refetch on this interval (paused while the tab is hidden). Single-task detail is not
+// polled: an open edit form must not change underneath the user, and the 409 flow covers staleness.
+const POLL_MS = 30_000;
+
 // Every key starts with the user id so a different identity never sees cached data.
 function useKey(...parts: unknown[]) {
   const user = useUser();
@@ -16,12 +20,12 @@ function useKey(...parts: unknown[]) {
 
 export function useDashboard() {
   const queryKey = useKey("dashboard");
-  return useQuery({ queryKey, queryFn: () => api<One<Dashboard>>("/dashboard").then((r) => r.data) });
+  return useQuery({ queryKey, queryFn: () => api<One<Dashboard>>("/dashboard").then((r) => r.data), refetchInterval: POLL_MS });
 }
 
 export function useProjects(query: Query) {
   const queryKey = useKey("projects", query);
-  return useQuery({ queryKey, queryFn: () => api<Paginated<Project>>("/projects", { query }), placeholderData: keepPreviousData });
+  return useQuery({ queryKey, queryFn: () => api<Paginated<Project>>("/projects", { query }), placeholderData: keepPreviousData, refetchInterval: POLL_MS });
 }
 
 export function useProject(id: string) {
@@ -31,7 +35,7 @@ export function useProject(id: string) {
 
 export function useTasks(query: Query) {
   const queryKey = useKey("tasks", query);
-  return useQuery({ queryKey, queryFn: () => api<Paginated<Task>>("/tasks", { query }), placeholderData: keepPreviousData });
+  return useQuery({ queryKey, queryFn: () => api<Paginated<Task>>("/tasks", { query }), placeholderData: keepPreviousData, refetchInterval: POLL_MS });
 }
 
 export function useTask(id: string) {
@@ -45,6 +49,7 @@ export function useComments(taskId: string, pageSize: number) {
     queryKey,
     queryFn: () => api<Paginated<Comment>>(`/tasks/${taskId}/comments`, { query: { pageSize } }),
     placeholderData: keepPreviousData,
+    refetchInterval: POLL_MS,
   });
 }
 

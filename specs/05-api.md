@@ -19,7 +19,7 @@ contract. The server Zod schemas (`server/src/http/schemas.ts`) and client types
 | Login | `req.session.regenerate()`, then set userId, authVersion, authExpiresAt and a **new** csrfToken |
 | Logout | `req.session.destroy()` + `res.clearCookie("neostat.sid", { path: "/" })` → 204 |
 | CSRF | Every non-GET request (login and logout included) needs `X-CSRF-Token` equal to `session.csrfToken` (constant-time compare). A present `Origin` header that differs from `CLIENT_ORIGIN` → 403 |
-| Rate limit (P1) | `POST /auth/login`: 10 **failed** attempts per IP per 15 min → 429 `RATE_LIMITED` (`express-rate-limit` with `skipSuccessfulRequests: true`) |
+| Rate limit (P1) | `POST /auth/login`: 10 **failed** attempts per IP per 15 min → 429 `RATE_LIMITED` (`express-rate-limit` with `skipSuccessfulRequests: true`; `standardHeaders`, no legacy headers). The limit is injectable through `createApp({ loginAttemptLimit })` for tests |
 | Caching | All `/api` responses: `Cache-Control: no-store` |
 
 **`loadActor` middleware** runs on every route except `/health`, `/auth/csrf` and `/auth/login`:
@@ -161,6 +161,7 @@ otherwise). Tier P0 unless noted.
 | GET `/auth/me` | session | — | 200 `{data:{user, csrfToken}}` | 401 if not logged in |
 | POST `/auth/logout` | session + CSRF | — | 204 | |
 | PATCH `/profile` | session | `{name}` | 200 `{data:User}` | |
+| POST `/profile/password` | session + CSRF | `{currentPassword, newPassword}` | 204 | *(P1)* 400 VALIDATION_ERROR (wrong current password → `fieldErrors.currentPassword`; new password 8–128 chars and different from the current one). Bumps `auth_version`, so every other session is revoked; the calling session stays valid (its `authVersion` is updated). |
 | GET `/dashboard` | session | — | 200 `{data:Dashboard}` | Scoped (`03` §2) |
 
 ### Users (Admin only, 403 otherwise)

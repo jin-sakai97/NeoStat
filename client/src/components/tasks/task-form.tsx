@@ -217,12 +217,12 @@ export function TaskForm({ projectId, task, layout, onDone }: Props) {
           assigneeLabel={assigneeLabel}
           onCopy={copyDraft}
           onReload={() => { setBase(conflict); setDraft(toDraft(conflict)); setConflict(null); }}
-          onReapply={() => {
+          onReapply={(keepLatest) => {
             const allowed = conflict.capabilities.editableFields;
             const dropped = dirtyFields.filter((field) => !allowed.includes(field));
             const latest = toDraft(conflict);
             setBase(conflict);
-            setDraft((d) => ({ ...d, ...Object.fromEntries(dropped.map((field) => [field, latest[field]])) }));
+            setDraft((d) => ({ ...d, ...Object.fromEntries([...dropped, ...keepLatest].map((field) => [field, latest[field]])) }));
             setConflict(null);
             if (dropped.length) toast.warning(`You can no longer change: ${dropped.map((f) => FIELD_LABEL[f]).join(", ")}`);
             else toast.info("Your changes are applied on top of the latest version. Review them and save again.");

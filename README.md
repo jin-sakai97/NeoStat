@@ -192,8 +192,8 @@ generic 500 messages.
 | Suite | Command | Result (2026-10-23) |
 | --- | --- | --- |
 | Unit (policy matrix, password hashing, app errors/CORS) | `npm test` | **9 / 9 pass** |
-| Integration (real PostgreSQL: auth, CSRF, permission matrix, lifecycle, concurrency, validation) | `npm run test:integration` | **30 / 30 pass** |
-| Browser (two-context conflict flow, viewer read-only) | `npm run test:e2e` | **2 / 2 pass** |
+| Integration (real PostgreSQL: auth, rate limit, password change, CSRF, permission matrix, lifecycle, concurrency, validation) | `npm run test:integration` | **32 / 32 pass** |
+| Browser (two-context conflict flow, per-field picker, viewer read-only) | `npm run test:e2e` | **2 / 3 pass** on the current dev DB (viewer fixture drift, see `specs/10-verification-log.md`) |
 | Lint + typecheck + production builds | `npm run check` | **pass** |
 
 Highlights: two simultaneous same-version updates produce exactly one 200 and one 409; a
@@ -203,10 +203,10 @@ other in parallel leave exactly one admin.
 
 ## Known limitations and next steps
 
-- No login rate limiting yet (planned: 10 failed attempts per IP per 15 minutes).
-- The conflict dialog compares field by field but offers whole-draft actions (Reload or Re-apply);
-  a per-field picker is planned.
-- No real-time push: lists refresh on window focus, and conflicts are caught on save.
+- Login is limited to 10 failed attempts per IP per 15 minutes (in-memory counter, so it resets
+  when the API restarts and is per process).
+- No real-time push: lists refetch on window focus and every 30 seconds while the tab is visible,
+  and conflicts are caught on save.
 - Soft-deleted projects can't be restored from the UI. There are no invitations or
   password-reset emails (admins create accounts).
 - Roadmap: Kanban view (same versioned PATCH), audit history, SSE notifications, labels,
