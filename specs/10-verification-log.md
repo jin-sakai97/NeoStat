@@ -65,6 +65,19 @@ check was skipped, say so.
 - Spec fix: `03 §6/§7` lock order now project → membership → task (matches code; deadlock-free
   because bulk writers take the project row FOR UPDATE first).
 
+### 2026-10-23 — S4 + S5 Frontend
+
+- shadcn/ui (radix-nova) with spec tokens; system font (removed Google-fonts Geist: offline build
+  failed fetching it). Pages: login, dashboard, projects, project overview/tasks/team, my tasks,
+  task detail + comments, users, profile. Conflict dialog with Reload latest (confirmed) /
+  Re-apply my changes / Copy my changes; delete-conflict re-confirm; lost-permission state.
+- `npm run check` ✅ (lint, typecheck, unit 9/9, both builds) · `npm run test:integration` → 30/30 ✅.
+- Browser (Playwright + system Chromium): admin dashboard/projects/tasks/users render; two-context
+  conflict → dialog → re-apply → save ✅; viewer read-only, no comment box ✅; 390px width no page
+  overflow ✅. `npm run test:e2e` → **2/2 ✅** (D8, D10). Console: only expected 401 (pre-login
+  `/auth/me`) and the intentional 409.
+- Deferred P1: per-field Latest/Mine picker (T5.8).
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

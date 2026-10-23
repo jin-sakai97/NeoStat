@@ -69,29 +69,29 @@ Build in this order. Each service follows the lock order in `→ 03 §6`.
 
 ## S4 — Frontend core (85–125 min) · R01 R11
 
-- [ ] **T4.1** Read `node_modules/next/dist/docs` for the App Router layout, `params` and `useSearchParams`. Run `npx shadcn@latest init` in `client/`, add the components from `→ 06 §2`, then run `npm run build -w client` **immediately** (Tailwind 4 risk, `01-review` §5).
-- [ ] **T4.2** Client deps: `@tanstack/react-query react-hook-form zod @hookform/resolvers lucide-react sonner`.
-- [ ] **T4.3** Tokens and fonts in `globals.css` (`→ 06 §1`). Remove the starter page content and Mongo wording.
-- [ ] **T4.4** `lib/api.ts` (credentials, CSRF header on non-GET, parse the envelope into `ApiError{status, code, message, fieldErrors, details}`), `lib/auth.tsx`, `lib/types.ts`, `lib/queries.ts`.
-- [ ] **T4.5** `providers.tsx`, `/` redirect, `/login` page (`→ 06 §4`).
-- [ ] **T4.6** `(app)/layout.tsx`: auth guard plus `AppShell` (sidebar, mobile top bar; the sheet is P1).
-- [ ] **T4.7** Shared components: PageHeader, badges, UserAvatar, DataTable, Pager, StateView, ConfirmDialog, ArchivedBanner.
-- [ ] **T4.8** `/dashboard`, `/projects`, the project layout with tabs, and the Overview page.
-- [ ] **T4.9** `/projects/:id/tasks` and `/tasks` using the shared `TaskTable` + filters synced to the URL. Inline status dropdown.
-- [ ] **T4.10** `/tasks/:id`: the TaskForm with dirty-only submit, the version label, and read-only rendering of non-editable fields.
+- [x] **T4.1** Read `node_modules/next/dist/docs` for the App Router layout, `params` and `useSearchParams`. Run `npx shadcn@latest init` in `client/`, add the components from `→ 06 §2`, then run `npm run build -w client` **immediately** (Tailwind 4 risk, `01-review` §5).
+- [x] **T4.2** Client deps: `@tanstack/react-query react-hook-form zod @hookform/resolvers lucide-react sonner`.
+- [x] **T4.3** Tokens and fonts in `globals.css` (`→ 06 §1`). Remove the starter page content and Mongo wording.
+- [x] **T4.4** `lib/api.ts` (credentials, CSRF header on non-GET, parse the envelope into `ApiError{status, code, message, fieldErrors, details}`), `lib/auth.tsx`, `lib/types.ts`, `lib/queries.ts`.
+- [x] **T4.5** `providers.tsx`, `/` redirect, `/login` page (`→ 06 §4`).
+- [x] **T4.6** `(app)/layout.tsx`: auth guard plus `AppShell` (sidebar, mobile top bar; the sheet is P1).
+- [x] **T4.7** Shared components: PageHeader, badges, UserAvatar, DataTable, Pager, StateView, ConfirmDialog, ArchivedBanner.
+- [x] **T4.8** `/dashboard`, `/projects`, the project layout with tabs, and the Overview page.
+- [x] **T4.9** `/projects/:id/tasks` and `/tasks` using the shared `TaskTable` + filters synced to the URL. Inline status dropdown.
+- [x] **T4.10** `/tasks/:id`: the TaskForm with dirty-only submit, the version label, and read-only rendering of non-editable fields.
 - **Checks:** `npm run check`. Log in as each demo role in the browser and click through. No console errors.
 - **Commit:** `S4: add app shell, auth flow, dashboard, projects and task pages`
 
 ## S5 — Management UI and conflicts (125–150 min) · R03–R08 R11
 
-- [ ] **T5.1** Task create/edit dialog and delete with version (delete-conflict flow).
-- [ ] **T5.2** ConflictDialog (`→ 06 §6`): Latest vs Mine, Reload latest (confirm if dirty), Re-apply my changes, Copy my changes, lost-permission state.
-- [ ] **T5.3** Comments: list with load-more, composer, delete with confirm.
-- [ ] **T5.4** Team page: add member, change role, remove (confirm text with the unassign count), change manager (Admin).
-- [ ] **T5.5** Project dialogs: new project (Admin), edit details, archive/restore/delete confirms.
-- [ ] **T5.6** `/users`: table, filters, create/edit dialog, deactivate/reactivate confirm, readable 409 messages.
-- [ ] **T5.7** `/profile`.
-- [ ] **T5.8** *(P1)* Per-field Latest/Mine picker. Mobile nav sheet.
+- [x] **T5.1** Task create/edit dialog and delete with version (delete-conflict flow).
+- [x] **T5.2** ConflictDialog (`→ 06 §6`): Latest vs Mine, Reload latest (confirm if dirty), Re-apply my changes, Copy my changes, lost-permission state.
+- [x] **T5.3** Comments: list with load-more, composer, delete with confirm.
+- [x] **T5.4** Team page: add member, change role, remove (confirm text with the unassign count), change manager (Admin).
+- [x] **T5.5** Project dialogs: new project (Admin), edit details, archive/restore/delete confirms.
+- [x] **T5.6** `/users`: table, filters, create/edit dialog, deactivate/reactivate confirm, readable 409 messages.
+- [x] **T5.7** `/profile`.
+- [ ] **T5.8** *(P1)* Per-field Latest/Mine picker. (Mobile nav sheet ✅ done.)
 - **Checks:** `npm run check`. Run the two-browser conflict demo by hand (`08` §F1).
 - **Commit:** `S5: add team, user admin, comments and conflict resolution UI`
 
