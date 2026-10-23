@@ -244,6 +244,37 @@ card for Admin (Archive/Restore, Delete project, Change manager).
   Priority, Assignee (select, "Unassigned" first, from `members?assignable=true`), Due date
   (`<input type="date">` with a clear button).
 
+**Board view (S10).** A **List | Board** toggle (buttons with `aria-pressed`, state in the URL as
+`?view=board`) sits at the start of the toolbar on `/projects/:id/tasks` only (not on My Tasks).
+
+```text
+[List|Board] [🔍 Search…] [Priority ▾] [Assignee ▾]                          [+ New task]*
+┌ ○ To do · 3 ───────────┐ ┌ ◉ In progress · 2 ─────┐ ┌ ✓ Done · 1 ───────────┐
+│ ┌────────────────────┐ │ │ ┌────────────────────┐ │ │                       │
+│ │ Write checklist  ⋯ │ │ │ │ Design hero      ⋯ │ │ │   Drop a task here    │
+│ │ = Medium  (MM) Meera│ │ │ │ ↑ High  Oct 21 ⚠   │ │ │                       │
+│ └────────────────────┘ │ │ └────────────────────┘ │ │                       │
+└────────────────────────┘ └────────────────────────┘ └───────────────────────┘
+```
+
+- Three columns by status, in order To do, In progress, Done. The Status filter and the sort
+  control are hidden in this view (the column is the status; cards are newest-updated first).
+  Search, Priority and Assignee filters still apply.
+- The board loads up to 100 tasks (`pageSize=100`). If the project has more, a note says
+  "Showing the 100 most recently updated tasks. Use filters or the list view for the rest."
+- A card shows the title (links to `/tasks/:id`), priority badge, assignee chip and due date
+  (overdue style as in the list).
+- **Moving a card** sends exactly the list view's `PATCH {version, status}`: drag a card onto
+  another column, or use the card's **Move to** menu (keyboard and touch path). Both exist only
+  if `editableFields` includes `status` and the project is active; otherwise the card is plain.
+- While the request runs the card appears in the target column, dimmed (`aria-busy`). Nothing is
+  optimistic: on success the lists refetch, on any error the card returns to its column.
+- On 409 `TASK_VERSION_CONFLICT` the card returns, the data is refetched, and a toast says
+  "Someone updated this task — refreshed to the latest version." with an **Open task** action.
+  The mutation is never retried (`03 §7`).
+- Dragging uses native HTML drag and drop (no new dependency). Touch devices and keyboard users
+  use the Move to menu. Columns are `role="group"` with the status name and count as the label.
+
 **Team:**
 
 ```text

@@ -125,6 +125,28 @@ check was skipped, say so.
   (`npm run build && npm run start`, after `npm run db:migrate`) to see History. E2E here ran against a
   separate API (:4100) and client (:3001).
 
+### 2026-10-23 — S10 Kanban board
+
+- Spec first: `06 §4` "Board view", `08` F8/F9, `02` P1 line. No API change: the board uses
+  `GET /tasks?projectId&pageSize=100` and the existing version-checked `PATCH {version, status}`.
+- Client: `task-board.tsx` (3 status columns, native drag and drop, **Move to** menu for keyboard and
+  touch, dimmed `aria-busy` card while the request runs, 100-task note), `use-status-change.ts` (one hook
+  for the status PATCH and its 409/other toasts, now also used by the list's inline status select),
+  List | Board toggle in `task-table.tsx` (`?view=board`, project page only, Status filter and sort hidden).
+- Nothing is optimistic and nothing is retried: on 409 the card returns, data refetches, and the toast
+  offers **Open task**.
+- Commands: `npm run check` ✅ · `npm run test:integration` → **39 pass / 0 fail** (no server change).
+- `e2e/board.spec.ts` → **3 / 3 pass** against a separate API (:4100) and client (:3001). It builds its own
+  project and tasks through the API (new env `E2E_API_URL`, default `http://localhost:4000/api`) and soft
+  deletes the project afterwards. Covers drag, Move to, version +1 and saved status (F8), viewer sees no
+  Move to / no draggable cards (F8), stale card → conflict toast, card returns, status unchanged (F9).
+- The older specs (`conflict`, `history`) fail on the current dev DB because the demo projects and tasks
+  were deleted at the participant's request earlier today (backup `/tmp/neostat-before-clear.sql`);
+  `npm run db:seed` restores what they need. Last run with seed data: conflict 3/3 pass except the
+  viewer-drift test described above, history 1/1 pass.
+- Not covered by automation: a real touch device (the Move to menu is the touch path) and the 390px
+  layout of the board (columns stack to one column below `md`).
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

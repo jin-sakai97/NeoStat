@@ -122,6 +122,15 @@ Build in this order. Each service follows the lock order in `→ 03 §6`.
 - [x] **T9.6** Client: `useTaskActivity`, "History" panel on `/tasks/[id]`, types.
 - [x] **T9.7** Checks, verification log, README, commit `S9: add task activity history`, push.
 
+## S10 — Kanban board (P1 follow-up)
+
+- [x] **T10.1** Spec: `06 §4` board view, `08` F8/F9, `02` (this section).
+- [x] **T10.2** `components/tasks/use-status-change.ts`: one hook for the versioned status PATCH and its 409/other-error toasts; use it in `InlineStatus` and the board.
+- [x] **T10.3** `components/tasks/task-board.tsx`: columns, cards, native drag and drop, Move to menu, pending/dimmed state, 100-task note.
+- [x] **T10.4** `task-table.tsx`: List | Board toggle (`?view=board`, project page only), hide Status filter and sort on the board.
+- [x] **T10.5** e2e `board.spec.ts` (creates its own project and tasks through the API, so it does not depend on seed data).
+- [x] **T10.6** Checks, verification log, README, commit `S10: add kanban board view`, push.
+
 ---
 
 ## Definition of done (whole project)

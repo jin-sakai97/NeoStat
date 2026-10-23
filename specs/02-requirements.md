@@ -45,6 +45,8 @@
 
 - Task activity history: who changed which field of a task, from what to what (`04 §2a`, S9).
 
+- Kanban board view of a project's tasks; moving a card is the same versioned status PATCH (`06 §4`, S10).
+
 ### P2 — roadmap
 
 See `00-plan.md` §12.

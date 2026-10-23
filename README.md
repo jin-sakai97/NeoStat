@@ -211,7 +211,9 @@ other in parallel leave exactly one admin.
   password-reset emails (admins create accounts).
 - Task history is recorded per task (who changed which field). Membership and project lifecycle
   changes are not audited yet.
-- Roadmap: Kanban view (same versioned PATCH), wider audit history, SSE notifications, labels,
+- The board shows up to 100 tasks per project (filters and the list view cover the rest); cards move by
+  drag and drop (mouse) or the Move to menu (keyboard, touch).
+- Roadmap: wider audit history, SSE notifications, labels,
   multiple managers. See [`specs/00-plan.md`](specs/00-plan.md) §12.
 
 ## AI assistance

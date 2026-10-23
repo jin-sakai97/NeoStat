@@ -114,4 +114,6 @@ LC = Legacy CRM (archived).
 | F4 | 390px width: no horizontal page scroll. Tables scroll inside their card | M | P0 |
 | F5 | Fresh DB: migrate, seed, seed again → no duplicates, no resets | I/M | P0 |
 | F6 | A new clone following only the README reaches a working login | M | P0 |
+| F8 | Board view: switch List → Board, drag a card to another column (and, separately, use Move to) | The task's status changes, `version` +1, card shows in the new column after refetch; a Viewer sees no drag handle and no Move to | E/M | P1 |
+| F9 | Board view: two browsers, one moves a card while the other has it stale | The stale mover gets the 409 toast, the card returns to its column, nothing is saved | E | P1 |
 | F7 | Desktop and mobile screenshots of login, task list and task detail in the README | M | P1 |
