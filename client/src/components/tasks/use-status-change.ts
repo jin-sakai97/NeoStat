@@ -1,8 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { api, isApiError } from "@/lib/api";
+import { useUser } from "@/lib/auth";
 import { TASK_FAMILIES, useApiMutation } from "@/lib/queries";
 import type { Task, TaskStatus } from "@/lib/types";
 
@@ -10,6 +12,8 @@ import type { Task, TaskStatus } from "@/lib/types";
 // It waits for the server, never retries, and resolves to whether the change was saved.
 export function useStatusChange() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const user = useUser();
   const mutation = useApiMutation(
     ({ task, status }: { task: Task; status: TaskStatus }) => api(`/tasks/${task.id}`, { method: "PATCH", body: { version: task.version, status } }),
     TASK_FAMILIES,
@@ -22,6 +26,8 @@ export function useStatusChange() {
       return true;
     } catch (error) {
       if (isApiError(error, "TASK_VERSION_CONFLICT")) {
+        // Wait for the fresh data before resolving, so a card isn't shown back in its stale column first.
+        await Promise.all(["tasks", "task"].map((family) => queryClient.invalidateQueries({ queryKey: [user.id, family] })));
         toast.warning("Someone updated this task — refreshed to the latest version.", {
           action: { label: "Open task", onClick: () => router.push(`/tasks/${task.id}`) },
         });

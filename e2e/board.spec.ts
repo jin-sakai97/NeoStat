@@ -36,6 +36,8 @@ async function signIn(browser: Browser, email: string) {
 
 const stamp = Date.now();
 const titles = { drag: `Drag me ${stamp}`, menu: `Menu me ${stamp}`, stale: `Stale me ${stamp}` };
+// 140 characters without a space: it must wrap inside its card instead of widening the page.
+const longTitle = `${"L".repeat(140)}${stamp}`;
 let admin: Awaited<ReturnType<typeof apiAs>>;
 let projectId: string;
 const taskIds: Record<keyof typeof titles, string> = { drag: "", menu: "", stale: "" };
@@ -47,6 +49,7 @@ test.beforeAll(async () => {
   for (const key of Object.keys(titles) as (keyof typeof titles)[]) {
     taskIds[key] = (await admin.post(`/projects/${projectId}/tasks`, { title: titles[key] })).id;
   }
+  await admin.post(`/projects/${projectId}/tasks`, { title: longTitle });
 });
 
 test.afterAll(async () => {
@@ -94,10 +97,39 @@ test("F9: moving a stale card shows the conflict toast, returns the card and sav
   // Someone else moves it first; this page still holds version 1.
   await admin.patch(`/tasks/${taskIds.stale}`, { version: 1, status: "DONE" });
 
+  // Record, per frame, which column holds the card. Once it leaves To do it must never flash back.
+  await page.evaluate((title) => {
+    const w = window as unknown as { __seen: string[]; __raf: number };
+    w.__seen = [];
+    const loop = () => {
+      const li = [...document.querySelectorAll("li")].find((el) => el.textContent?.includes(title));
+      w.__seen.push(li?.closest("[role=group]")?.getAttribute("aria-label")?.split(",")[0] ?? "none");
+      w.__raf = requestAnimationFrame(loop);
+    };
+    loop();
+  }, titles.stale);
+
   await page.getByRole("button", { name: `Move ${titles.stale}` }).click();
   await page.getByRole("menuitem", { name: "Move to In progress" }).click();
   await expect(page.getByText("Someone updated this task — refreshed to the latest version.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Open task" })).toBeVisible();
   await expect(column(page, "Done").getByText(titles.stale)).toBeVisible();
   expect((await admin.get(`/tasks/${taskIds.stale}`)).status).toBe("DONE");
+
+  const seen = await page.evaluate(() => {
+    const w = window as unknown as { __seen: string[]; __raf: number };
+    cancelAnimationFrame(w.__raf);
+    return w.__seen;
+  });
+  const afterLeaving = seen.slice(seen.findIndex((column) => column !== "To do"));
+  expect(afterLeaving, `column sequence: ${seen.join(" > ")}`).not.toContain("To do");
+});
+
+test("A long unbroken title wraps inside its card and does not widen the page on a phone", async ({ browser }) => {
+  const page = await signIn(browser, "admin@neostat.test");
+  await page.setViewportSize({ width: 390, height: 800 });
+  await board(page);
+  await expect(page.getByRole("link", { name: longTitle })).toBeVisible();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBe(0);
 });

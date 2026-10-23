@@ -40,7 +40,8 @@ export function TaskBoard({ tasks, total }: Props) {
 
   return (
     <div>
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* grid-cols-1 is minmax(0, 1fr): without it a long unbroken title widens the column past the screen. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {COLUMNS.map((status) => {
           const column = tasks.filter((task) => (pending[task.id] ?? task.status) === status);
           const { icon: Icon } = STATUS_STYLE[status];
@@ -96,7 +97,8 @@ export function TaskBoard({ tasks, total }: Props) {
                         )}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <Link href={`/tasks/${task.id}`} className="min-w-0 break-words text-sm font-medium hover:text-primary hover:underline">{task.title}</Link>
+                          {/* draggable={false}: otherwise grabbing the title starts a link drag instead of moving the card. */}
+                          <Link href={`/tasks/${task.id}`} draggable={false} className="min-w-0 break-words text-sm font-medium hover:text-primary hover:underline">{task.title}</Link>
                           {movable && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>

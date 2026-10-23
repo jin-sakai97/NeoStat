@@ -147,6 +147,28 @@ check was skipped, say so.
 - Not covered by automation: a real touch device (the Move to menu is the touch path) and the 390px
   layout of the board (columns stack to one column below `md`).
 
+### 2026-10-23 — S10 board bug hunt
+
+- Method: seeded `neostat_test` (the dev DB was emptied on request, and creating a database is not
+  allowed for this role), a separate API (:4100) and client (:3001), the full Playwright suite plus
+  exploratory probes: 390px width, member (only assigned tasks movable), archived project (read-only),
+  stale `?status=` in the URL, search with no match and Clear filters, List/Board toggle, keyboard-only
+  Move to, same-column drop and drop outside (no request), two moves back to back, very long titles.
+- **Bug 1 (fixed):** a 140-character title without spaces made the page 733 px wider than a 390 px screen.
+  Cause: the board grid had no explicit column track on mobile, so the column grew to its content.
+  Fix: `grid-cols-1` (`minmax(0, 1fr)`).
+- **Bug 2 (fixed):** after a 409 the card briefly reappeared in its old column (To do → In progress → To
+  do → Done) before the refetch landed. Cause: the pending marker was cleared before the refresh finished.
+  Fix: `useStatusChange` awaits the tasks refetch on a conflict before resolving.
+- Not a bug: dragging by the title link seemed to move the wrong card. The probe showed the mousedown on the
+  right card, then Playwright scrolled the page while the button was held, so Chromium picked the card that
+  slid under the pointer. With a tall viewport the right task moves. `draggable={false}` on the title link
+  stays as a harmless precaution (no link ghost image).
+- Regression tests added to `e2e/board.spec.ts` (long title; column sequence on conflict). Both fail on the
+  previous code (733 px overflow; `To do` reappears) and pass now.
+- Commands: `npm run check` ✅ · `npm run test:integration` → 39 pass / 0 fail · `playwright test` → **8 / 8 pass**.
+- Other observations: the 401 in the browser console is the expected pre-login `/auth/me`.
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

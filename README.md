@@ -193,7 +193,7 @@ generic 500 messages.
 | --- | --- | --- |
 | Unit (policy matrix, password hashing, app errors/CORS) | `npm test` | **9 / 9 pass** |
 | Integration (real PostgreSQL: auth, rate limit, password change, CSRF, permission matrix, lifecycle, concurrency, validation) | `npm run test:integration` | **39 / 39 pass** |
-| Browser (two-context conflict flow, per-field picker, viewer read-only) | `npm run test:e2e` | **2 / 3 pass** on the current dev DB (viewer fixture drift, see `specs/10-verification-log.md`) |
+| Browser (conflict flow, per-field picker, task history, Kanban board, viewer read-only) | `npm run test:e2e` | **8 / 8 pass** on a freshly seeded database |
 | Lint + typecheck + production builds | `npm run check` | **pass** |
 
 Highlights: two simultaneous same-version updates produce exactly one 200 and one 409; a
