@@ -56,6 +56,15 @@ check was skipped, say so.
   (A1, A2, A3, A4, A5, A6, A7, A10). B18 partially covered by `tests/unit/policy.test.ts`.
 - Deferred (P1): login rate limit (A8).
 
+### 2026-10-23 — S3 Domain APIs
+
+- Projects (CRUD, archive/restore, soft delete, manager replacement), members (add/role/remove with
+  unassign + version bump, candidates, assignable filter), tasks (scoped list with filters, sort
+  whitelist, pagination; version-conditioned PATCH/DELETE), comments, users (admin guards), dashboard.
+- `npm run test:integration` → **30/30 ✅** covering A1–A7, A10, B1–B16, C1–C19, D1–D7, E1–E9, E12.
+- Spec fix: `03 §6/§7` lock order now project → membership → task (matches code; deadlock-free
+  because bulk writers take the project row FOR UPDATE first).
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

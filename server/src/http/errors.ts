@@ -28,7 +28,7 @@ export const notFoundHandler: RequestHandler = (_req, res) => {
   res.status(404).json({ error: { code: "NOT_FOUND", message: "Route not found." } });
 };
 
-const DB_DOWN_CODES = new Set(["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "57P01", "57P03", "08006", "08001"]);
+const DB_DOWN_CODES = new Set(["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "57P01", "57P03", "08006", "08001", "40P01", "40001"]);
 
 export const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
   if (res.headersSent) {

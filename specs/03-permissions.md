@@ -167,14 +167,14 @@ always taken in this **global order** so that two transactions can never deadloc
 ```
 1. users rows        (admin-guard set, or the target user)   FOR UPDATE
 2. projects row                                              FOR UPDATE (structure change) | FOR SHARE (content write)
-3. tasks rows                                                FOR UPDATE / via UPDATE
-4. project_members rows                                      FOR SHARE (read actor) / UPDATE / DELETE
+3. project_members rows                                      FOR SHARE (read actor) / UPDATE / DELETE
+4. tasks rows                                                FOR UPDATE / via UPDATE
 5. comments
 ```
 
 | Operation | Locks taken (in order) |
 | --- | --- |
-| Task PATCH / DELETE | project `FOR SHARE` → task `FOR UPDATE` → actor membership `FOR SHARE` |
+| Task PATCH / DELETE | project `FOR SHARE` → actor membership `FOR SHARE` → task `FOR UPDATE` |
 | Task create, comment create/delete | project `FOR SHARE` → actor membership `FOR SHARE` |
 | Membership add/change/remove, manager replace, archive/restore/delete, project edit | project `FOR UPDATE` |
 | Deactivate / role change / reactivate | if target or actor is ADMIN, or the change removes ADMIN: `SELECT … FROM users WHERE role='ADMIN' AND is_active FOR UPDATE`; then target user `FOR UPDATE` (skip if already locked) |
@@ -182,6 +182,9 @@ always taken in this **global order** so that two transactions can never deadloc
 
 Rules:
 
+- Every operation that changes membership or bulk-updates tasks in a project first takes the
+  project row `FOR UPDATE`, which conflicts with the content writers' `FOR SHARE`. So members and
+  tasks are never locked in opposite orders by two transactions touching the same project.
 - Inside the transaction, **re-read** the actor (`is_active`, `role`) and their membership. Never
   trust values cached from the session middleware for write decisions.
 - The task update is still **conditional on version** (`WHERE id = $1 AND version = $2`). The row
@@ -201,9 +204,9 @@ BEGIN
   if !task                                                         → 404
   proj  := SELECT … FROM projects WHERE id=task.project_id AND deleted_at IS NULL FOR SHARE
   if !proj                                                         → 404
-  task  := SELECT … FROM tasks WHERE id=$id FOR UPDATE             (fresh; may have been deleted → 404)
   actor := SELECT is_active, role FROM users WHERE id=$actor
   mem   := SELECT role FROM project_members WHERE project_id=… AND user_id=$actor FOR SHARE
+  task  := SELECT … FROM tasks WHERE id=$id FOR UPDATE             (fresh; may have been deleted → 404)
   r     := effectiveRole(actor, mem);  if r=null                   → 404
   allowed := editableTaskFields(r, task, actor)                    (uses CURRENT assignee)
   if any body key ∉ allowed                                        → 403 FORBIDDEN

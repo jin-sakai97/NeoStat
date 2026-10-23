@@ -57,13 +57,13 @@ Commit message format: `S<n>: <imperative summary>` + body bullets + the attribu
 
 Build in this order. Each service follows the lock order in `→ 03 §6`.
 
-- [ ] **T3.1** `repos/projects.repo.ts` with the scoped list query (`→ 04 §3`) and counts. `GET /projects`, `GET /projects/:id`, `POST /projects`, `PATCH /projects/:id`, archive, restore, `DELETE`.
-- [ ] **T3.2** Members: list (with `assignable`), candidates, add, change role, remove (unassign + version bump), and `PUT /manager`.
-- [ ] **T3.3** Tasks: `GET /tasks` (all filters, sort whitelist, scoped), `GET /tasks/:id`, `POST /projects/:id/tasks`, and `PATCH`/`DELETE` implementing the algorithm in `→ 03 §7` exactly.
-- [ ] **T3.4** Comments: list, create, delete.
-- [ ] **T3.5** Users (Admin): list, get, create, patch with all the guards (`→ 03 §5`).
-- [ ] **T3.6** `GET /dashboard`.
-- [ ] **T3.7** Integration tests: first-pass `tasks-concurrency.test.ts` (A1–A4 in `08`) and `permissions.test.ts` (scope 404s, member field rule, mixed-field 403).
+- [x] **T3.1** `repos/projects.repo.ts` with the scoped list query (`→ 04 §3`) and counts. `GET /projects`, `GET /projects/:id`, `POST /projects`, `PATCH /projects/:id`, archive, restore, `DELETE`.
+- [x] **T3.2** Members: list (with `assignable`), candidates, add, change role, remove (unassign + version bump), and `PUT /manager`.
+- [x] **T3.3** Tasks: `GET /tasks` (all filters, sort whitelist, scoped), `GET /tasks/:id`, `POST /projects/:id/tasks`, and `PATCH`/`DELETE` implementing the algorithm in `→ 03 §7` exactly.
+- [x] **T3.4** Comments: list, create, delete.
+- [x] **T3.5** Users (Admin): list, get, create, patch with all the guards (`→ 03 §5`).
+- [x] **T3.6** `GET /dashboard`.
+- [x] **T3.7** Integration tests: first-pass `tasks-concurrency.test.ts` (A1–A4 in `08`) and `permissions.test.ts` (scope 404s, member field rule, mixed-field 403).
 - **Checks:** `npm run check`, `npm run test:integration`. Manually try one curl conflict sequence.
 - **Commit:** `S3: add projects, members, tasks, comments, users and dashboard APIs`
 
