@@ -7,6 +7,7 @@ import { useState } from "react";
 import { ArchivedBanner } from "@/components/archived-banner";
 import { LoadingRows, QueryError } from "@/components/state-view";
 import { Comments } from "@/components/tasks/comments";
+import { History } from "@/components/tasks/history";
 import { DeleteTaskDialog } from "@/components/tasks/task-dialog";
 import { TaskForm } from "@/components/tasks/task-form";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export default function TaskDetailPage() {
       )}
       <TaskForm key={t.id} projectId={t.projectId} task={t} layout="page" />
       <Comments task={t} />
+      <History task={t} />
       {deleting && <DeleteTaskDialog task={t} onClose={() => setDeleting(false)} onDeleted={() => router.push(`/projects/${t.projectId}/tasks`)} />}
     </div>
   );

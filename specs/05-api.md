@@ -134,6 +134,12 @@ interface Task {
 }
 interface Comment { id: string; taskId: string; author: UserSummary; body: string;
                     createdAt: string; canDelete: boolean }
+interface TaskActivity {
+  id: string; kind: "CREATED" | "UPDATED"; actor: UserSummary; version: number; createdAt: string;
+  // only for UPDATED. assigneeId values are { id, name } | null, everything else string | null
+  changes: Partial<Record<TaskField, { from: string | { id: string; name: string } | null;
+                                       to: string | { id: string; name: string } | null }>>;
+}
 interface Dashboard {
   activeProjectCount: number;
   taskCounts: { todo: number; inProgress: number; done: number };
@@ -205,6 +211,7 @@ otherwise). Tier P0 unless noted.
 | GET `/tasks/:id` | member+ | — | 200 `Task` | 404 |
 | PATCH `/tasks/:id` | per `editableFields` | `{version, …changed fields}` | 200 `Task` | 403, 409 TASK_VERSION_CONFLICT / PROJECT_ARCHIVED |
 | DELETE `/tasks/:id` | Admin, manager | `{version}` (JSON body) | 204 | 409 TASK_VERSION_CONFLICT |
+| GET `/tasks/:id/activity` | member+ (same scope as the task) | query `page?, pageSize?` | 200 paginated `TaskActivity[]`, createdAt desc, id | 404 |
 
 `GET /tasks` query: `projectId?` (uuid), `assigneeId?` (uuid \| `me` \| `unassigned`),
 `status?`, `priority?`, `q?` (title ILIKE), `archived?` (default false; applies to the parent

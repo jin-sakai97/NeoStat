@@ -105,6 +105,26 @@ check was skipped, say so.
   these changes; dev data left untouched.
 - Still open: T6.2 and T6.3 (manual checks by the participant), README screenshots.
 
+### 2026-10-23 — S9 Task activity history
+
+- Spec first: `04 §2a` (table + rules), `05` (`GET /tasks/:id/activity`, `TaskActivity`), `08` E13–E16.
+- Migration `1761300000000_task-activity.sql` applied to `neostat` (additive). History rows are written in
+  the same transaction as the task change: `createTask` (CREATED v1), `updateTask` (only fields that really
+  changed; a no-op PATCH writes nothing) and `unassignTasks` (member removed or user deactivated).
+- Integration (`tests/integration/activity.test.ts`): E13 create/update/no-op, cleared values, E14
+  reassign + remove-member and deactivate-user cleanups with name snapshots and matching versions, E15
+  visibility (non-member 404, unknown 404, bad id 400, viewer 200), E16 409/403 leave no row, cascade on
+  task delete.
+- Client: `History` panel on `/tasks/[id]`, `useTaskActivity`, "activity" added to the invalidation
+  families. e2e `history.spec.ts` passes and restores the seeded title; it uses its own task because
+  Playwright runs spec files in parallel and the demo task is used for conflicts.
+- Commands: `npm run check` ✅ · `npm test` 9/9 · `npm run test:integration` → **39 pass / 0 fail** ·
+  `playwright test` → 3 pass, 1 fail (viewer read-only, dev-DB drift described above).
+- Note for the participant: a production `npm run start` from a VS Code terminal was already serving
+  :3000/:4000 and was left running. It serves the build from before S9, so rebuild and restart it
+  (`npm run build && npm run start`, after `npm run db:migrate`) to see History. E2E here ran against a
+  separate API (:4100) and client (:3001).
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

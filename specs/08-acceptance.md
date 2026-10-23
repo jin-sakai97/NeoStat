@@ -99,6 +99,10 @@ LC = Legacy CRM (archived).
 | E10 | Invalid JSON body / > 100 kb | 400 INVALID_JSON / 413 | U | P0 |
 | E11 | Dashboard counts as member2@ only include WR | | I | P0 |
 | E12 | `assigneeId=me` and `unassigned` filters | Correct sets | I | P0 |
+| E13 | Create a task, then PATCH title + status, then PATCH re-sending the same title | `GET /tasks/:id/activity` → CREATED (v1) and one UPDATED (v2) listing exactly title and status with from/to; the no-op PATCH adds no row | I | P1 |
+| E14 | Reassign, then remove the assignee from the project | UPDATED rows with `assigneeId` `{id,name}` → `{id,name}` and `→ null`, actor = the remover, version matches the task | I | P1 |
+| E15 | `GET /tasks/:id/activity` as a non-member / unknown task / viewer | 404 / 404 / 200 | I | P1 |
+| E16 | A stale PATCH (409) and a forbidden PATCH (403) | No activity row | I | P1 |
 
 ## F. Browser and submission — R10–R12
 

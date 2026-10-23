@@ -1,11 +1,12 @@
 import { Router } from "express";
 import type pg from "pg";
-import { projectAccess } from "../domain/access.js";
+import { projectAccess, taskProjectId } from "../domain/access.js";
 import { createTask, deleteTask, updateTask } from "../domain/tasks.service.js";
 import { notFound } from "../http/errors.js";
 import { limitOffset, paginated } from "../http/pagination.js";
-import { createTaskBody, deleteTaskBody, idParam, taskListQuery, updateTaskBody } from "../http/schemas.js";
+import { createTaskBody, deleteTaskBody, idParam, pageQuery, taskListQuery, updateTaskBody } from "../http/schemas.js";
 import { parse } from "../http/validate.js";
+import { listActivity } from "../repos/activity.repo.js";
 import { getTaskDTO, listTasks } from "../repos/tasks.repo.js";
 
 export function taskRoutes(pool: pg.Pool) {
@@ -29,6 +30,15 @@ export function taskRoutes(pool: pg.Pool) {
     const task = await getTaskDTO(pool, req.actor!, id);
     if (!task) throw notFound("Task");
     res.json({ data: task });
+  });
+
+  router.get("/tasks/:id/activity", async (req, res) => {
+    const { id } = parse(idParam, req.params);
+    const query = parse(pageQuery, req.query);
+    await projectAccess(pool, req.actor!, await taskProjectId(pool, id)); // not visible ⇒ 404
+    const { limit, offset } = limitOffset(query);
+    const { rows, total } = await listActivity(pool, id, limit, offset);
+    res.json(paginated(rows, total, query));
   });
 
   router.patch("/tasks/:id", async (req, res) => {

@@ -31,7 +31,7 @@ export function ConflictMessage({ error }: { error: ApiError }) {
   );
 }
 
-const USER_FAMILIES = ["users", "members", "candidates", "tasks", "task", "project", "projects", "dashboard"] as const;
+const USER_FAMILIES = ["users", "members", "candidates", "tasks", "task", "activity", "project", "projects", "dashboard"] as const;
 
 export function UserDialog({ user, self, onClose }: { user?: User; self?: boolean; onClose: () => void }) {
   const [values, setValues] = useState({ name: user?.name ?? "", email: user?.email ?? "", role: user?.role ?? ("TEAM_MEMBER" as AccountRole), password: "" });

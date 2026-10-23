@@ -43,6 +43,8 @@
 - Change own password (`POST /profile/password`, see `05-api.md`). ✅ done
 - Mobile navigation sheet (P0 fallback: the sidebar collapses to a top bar with links).
 
+- Task activity history: who changed which field of a task, from what to what (`04 §2a`, S9).
+
 ### P2 — roadmap
 
 See `00-plan.md` §12.

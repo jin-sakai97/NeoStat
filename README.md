@@ -192,7 +192,7 @@ generic 500 messages.
 | Suite | Command | Result (2026-10-23) |
 | --- | --- | --- |
 | Unit (policy matrix, password hashing, app errors/CORS) | `npm test` | **9 / 9 pass** |
-| Integration (real PostgreSQL: auth, rate limit, password change, CSRF, permission matrix, lifecycle, concurrency, validation) | `npm run test:integration` | **32 / 32 pass** |
+| Integration (real PostgreSQL: auth, rate limit, password change, CSRF, permission matrix, lifecycle, concurrency, validation) | `npm run test:integration` | **39 / 39 pass** |
 | Browser (two-context conflict flow, per-field picker, viewer read-only) | `npm run test:e2e` | **2 / 3 pass** on the current dev DB (viewer fixture drift, see `specs/10-verification-log.md`) |
 | Lint + typecheck + production builds | `npm run check` | **pass** |
 
@@ -209,7 +209,9 @@ other in parallel leave exactly one admin.
   and conflicts are caught on save.
 - Soft-deleted projects can't be restored from the UI. There are no invitations or
   password-reset emails (admins create accounts).
-- Roadmap: Kanban view (same versioned PATCH), audit history, SSE notifications, labels,
+- Task history is recorded per task (who changed which field). Membership and project lifecycle
+  changes are not audited yet.
+- Roadmap: Kanban view (same versioned PATCH), wider audit history, SSE notifications, labels,
   multiple managers. See [`specs/00-plan.md`](specs/00-plan.md) §12.
 
 ## AI assistance

@@ -4,6 +4,7 @@ import type { z } from "zod";
 import { type Db, withTransaction } from "../db/pool.js";
 import { AppError, forbidden, notFound, validationError } from "../http/errors.js";
 import type { createTaskBody, updateTaskBody } from "../http/schemas.js";
+import { diffTask, recordActivity } from "../repos/activity.repo.js";
 import { type TaskRow, getTaskDTO } from "../repos/tasks.repo.js";
 import { freshActor, projectAccess, requireWritable, taskProjectId } from "./access.js";
 import { type Actor, type TaskField, canManage, editableTaskFields } from "./policy.js";
@@ -36,6 +37,7 @@ export async function createTask(pool: pg.Pool, actorId: string, projectId: stri
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9)`,
       [id, projectId, input.title, input.description, input.status, input.priority, input.assigneeId, input.dueDate, actor.id],
     );
+    await recordActivity(client, { taskId: id, actorId: actor.id, kind: "CREATED", version: 1 });
     await client.query("UPDATE projects SET updated_at = now() WHERE id = $1", [projectId]);
     return getTaskDTO(client, actor, id);
   });
@@ -47,7 +49,10 @@ async function lockTaskForWrite(client: pg.PoolClient, actorId: string, taskId: 
   const actor = await freshActor(client, actorId);
   const projectId = await taskProjectId(client, taskId);
   const { project, role } = await projectAccess(client, actor, projectId, "share");
-  const { rows } = await client.query<TaskRow>("SELECT * FROM tasks WHERE id = $1 FOR UPDATE", [taskId]);
+  const { rows } = await client.query<TaskRow & { due_date_text: string | null }>(
+    "SELECT *, to_char(due_date, 'YYYY-MM-DD') AS due_date_text FROM tasks WHERE id = $1 FOR UPDATE",
+    [taskId],
+  );
   if (!rows[0]) throw notFound("Task");
   return { actor, project, role, task: rows[0] };
 }
@@ -78,6 +83,8 @@ export async function updateTask(pool: pg.Pool, actorId: string, taskId: string,
       values,
     );
     if (rowCount === 0) throw await conflict(client, actor, taskId);
+    const changed = await diffTask(client, task, changes);
+    if (Object.keys(changed).length) await recordActivity(client, { taskId, actorId: actor.id, kind: "UPDATED", changes: changed, version: version + 1 });
     await client.query("UPDATE projects SET updated_at = now() WHERE id = $1", [task.project_id]);
     return getTaskDTO(client, actor, taskId);
   });

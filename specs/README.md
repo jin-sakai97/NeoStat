@@ -9,7 +9,7 @@ spec *first* (with a note in `10-verification-log.md`) — never silently redefi
 | Item | State |
 | --- | --- |
 | Spec version | 1.0 (2026-10-23) |
-| Active slice | **Done (P0)** — P1: rate limit, password change, polling, per-field picker done; manual checks T6.2/T6.3 and screenshots open |
+| Active slice | **Done (P0)** — P1: rate limit, password change, polling, per-field picker done; manual checks T6.2/T6.3 and screenshots open; S9 task activity history done |
 | Source plan | ChatGPT-authored plan, reviewed and revised in `01-review.md` |
 | Challenge brief | **Cross-checked 2026-10-23** (see `01-review.md` §1). Hackathon is live |
 

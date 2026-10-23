@@ -112,6 +112,16 @@ Build in this order. Each service follows the lock order in `→ 03 §6`.
 - [x] **T7.2** `npm run check && npm run test:integration` one final time. Paste the counts into the README.
 - [x] **T7.3** `git status` review → commit `S7: finalize README and architecture note` → push → `git rev-parse HEAD` equals `git rev-parse origin/main`.
 
+## S9 — Task activity history (P1 follow-up)
+
+- [x] **T9.1** Spec: `04 §2a`, `05` endpoint and DTO, `08` E13–E16 (this section).
+- [x] **T9.2** Migration `1761300000000_task-activity.sql`; `repos/activity.repo.ts` (`recordActivity`, `diffTask`, `listActivity`).
+- [x] **T9.3** Record in `createTask`, `updateTask`, and `unassignTasks` (same transaction, after the task lock).
+- [x] **T9.4** `GET /tasks/:id/activity` in `routes/tasks.routes.ts`.
+- [x] **T9.5** Integration tests E13–E16; extend `resetDatabase` only if needed.
+- [x] **T9.6** Client: `useTaskActivity`, "History" panel on `/tasks/[id]`, types.
+- [x] **T9.7** Checks, verification log, README, commit `S9: add task activity history`, push.
+
 ---
 
 ## Definition of done (whole project)

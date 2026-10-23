@@ -3,7 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, isApiError } from "./api";
 import { useUser } from "./auth";
-import type { Candidate, Comment, Dashboard, Member, Paginated, Project, Task, User } from "./types";
+import type { Candidate, Comment, Dashboard, Member, Paginated, Project, Task, TaskActivity, User } from "./types";
 
 type Query = Record<string, string | number | boolean | undefined | null>;
 type One<T> = { data: T };
@@ -53,6 +53,15 @@ export function useComments(taskId: string, pageSize: number) {
   });
 }
 
+export function useTaskActivity(taskId: string, pageSize: number) {
+  const queryKey = useKey("activity", taskId, pageSize);
+  return useQuery({
+    queryKey,
+    queryFn: () => api<Paginated<TaskActivity>>(`/tasks/${taskId}/activity`, { query: { pageSize } }),
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function useMembers(projectId: string, options: { assignable?: boolean; enabled?: boolean } = {}) {
   const queryKey = useKey("members", projectId, options.assignable ?? false);
   return useQuery({
@@ -77,7 +86,7 @@ export function useUsers(query: Query, enabled = true) {
 }
 
 // Mutations: no retries, wait for the server, then invalidate the related resource families.
-type Family = "dashboard" | "projects" | "project" | "tasks" | "task" | "comments" | "members" | "candidates" | "users";
+type Family = "dashboard" | "projects" | "project" | "tasks" | "task" | "activity" | "comments" | "members" | "candidates" | "users";
 
 export function useApiMutation<TVars, TResult = unknown>(fn: (vars: TVars) => Promise<TResult>, invalidate: Family[]) {
   const queryClient = useQueryClient();
@@ -91,6 +100,6 @@ export function useApiMutation<TVars, TResult = unknown>(fn: (vars: TVars) => Pr
   });
 }
 
-export const TASK_FAMILIES: Family[] = ["task", "tasks", "project", "projects", "dashboard"];
-export const TEAM_FAMILIES: Family[] = ["members", "candidates", "project", "projects", "tasks", "task", "dashboard"];
+export const TASK_FAMILIES: Family[] = ["task", "activity", "tasks", "project", "projects", "dashboard"];
+export const TEAM_FAMILIES: Family[] = ["members", "candidates", "project", "projects", "tasks", "task", "activity", "dashboard"];
 export const PROJECT_FAMILIES: Family[] = ["project", "projects", "dashboard", "tasks"];

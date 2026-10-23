@@ -1,5 +1,6 @@
 import type { Db } from "../db/pool.js";
 import { AppError, notFound, unauthenticated } from "../http/errors.js";
+import { recordUnassignments } from "../repos/activity.repo.js";
 import { findUserById } from "../repos/users.repo.js";
 import { type Actor, type EffectiveRole, type ProjectRole, effectiveRole } from "./policy.js";
 
@@ -47,12 +48,17 @@ export function requireWritable(project: ProjectRow) {
   if (project.archived_at) throw new AppError(409, "PROJECT_ARCHIVED", "This project is archived and read-only.");
 }
 
-// Clears a user's task assignments, bumping each task's version so open editors become stale.
+// Clears a user's task assignments, bumping each task's version so open editors become stale,
+// and records one history row per affected task (specs/04-data-model.md §2a).
 export async function unassignTasks(db: Db, actorId: string, userId: string, projectId?: string) {
-  await db.query(
+  const { rows } = await db.query<{ id: string; version: number }>(
     `UPDATE tasks SET assignee_id = NULL, version = version + 1, updated_at = now(), updated_by = $1
      WHERE assignee_id = $2
-       AND ${projectId ? "project_id = $3" : "project_id IN (SELECT id FROM projects WHERE deleted_at IS NULL)"}`,
+       AND ${projectId ? "project_id = $3" : "project_id IN (SELECT id FROM projects WHERE deleted_at IS NULL)"}
+     RETURNING id, version`,
     projectId ? [actorId, userId, projectId] : [actorId, userId],
   );
+  if (!rows.length) return;
+  const user = await findUserById(db, userId);
+  await recordUnassignments(db, actorId, { id: userId, name: user?.name ?? "Unknown user" }, rows);
 }

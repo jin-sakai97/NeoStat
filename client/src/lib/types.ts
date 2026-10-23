@@ -42,6 +42,12 @@ export interface Comment {
   id: string; taskId: string; author: UserSummary; body: string; createdAt: string; canDelete: boolean;
 }
 
+export type ActivityValue = string | { id: string; name: string } | null;
+export interface TaskActivity {
+  id: string; kind: "CREATED" | "UPDATED"; actor: UserSummary; version: number; createdAt: string;
+  changes: Partial<Record<TaskField, { from: ActivityValue; to: ActivityValue }>>;
+}
+
 export interface Dashboard {
   activeProjectCount: number;
   taskCounts: { todo: number; inProgress: number; done: number };

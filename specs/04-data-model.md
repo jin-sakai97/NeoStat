@@ -113,6 +113,42 @@ Rules that the database **cannot** express and services must enforce:
 The old Mongo migration (`server/migrations/202610230001-initial-collections.cjs`) and
 `migrate-mongo-config.cjs` are removed in S1.
 
+### 2a. Migration `server/migrations/1761300000000_task-activity.sql` (S9, task history)
+
+```sql
+-- Up Migration
+
+CREATE TABLE task_activity (
+  id         uuid PRIMARY KEY,
+  task_id    uuid NOT NULL REFERENCES tasks (id) ON DELETE CASCADE,
+  actor_id   uuid NOT NULL REFERENCES users (id) ON DELETE RESTRICT,
+  kind       text NOT NULL CHECK (kind IN ('CREATED','UPDATED')),
+  -- { "<apiField>": { "from": <value|null>, "to": <value|null> } } for the fields that changed.
+  -- assigneeId values are { "id": uuid, "name": text } snapshots; every other value is a string.
+  changes    jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(changes) = 'object'),
+  version    integer NOT NULL CHECK (version > 0),   -- tasks.version after this change
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX task_activity_task_idx ON task_activity (task_id, created_at DESC, id);
+
+-- Down Migration
+
+DROP TABLE task_activity;
+```
+
+Rules:
+
+- A row is written **inside the same transaction** as the task change, after the task row is
+  locked (`03 §6`), so history and `tasks.version` can never disagree and no new lock order exists.
+- `CREATED` has `changes = {}` and `version = 1`. `UPDATED` lists only fields whose value really
+  changed (a PATCH that re-sends current values writes no row, but still bumps `version`).
+- The cleanup that unassigns tasks (member removed, user deactivated) writes one `UPDATED` row per
+  affected task: `changes = { assigneeId: { from: {id, name}, to: null } }`, actor = whoever
+  triggered it.
+- Comments are not activity (they have their own list). Deleting a task deletes its history
+  (cascade). Seed tasks start with no history; the UI says so.
+- Project, membership and user lifecycle audit stay on the roadmap (`00-plan.md` §12).
+
 ## 3. Key queries (for explanation)
 
 **Visible projects for an actor** (the scoped query used by lists, counts and the dashboard):
