@@ -9,7 +9,7 @@ spec *first* (with a note in `10-verification-log.md`) — never silently redefi
 | Item | State |
 | --- | --- |
 | Spec version | 1.0 (2026-10-23) |
-| Active slice | **S6 — Verification** (then S7 submission) (see `07-tasks.md`) |
+| Active slice | **Done (P0)** — P1 items listed in `10-verification-log.md` (see `07-tasks.md`) |
 | Source plan | ChatGPT-authored plan, reviewed and revised in `01-review.md` |
 | Challenge brief | **Cross-checked 2026-10-23** (see `01-review.md` §1). Hackathon is live |
 

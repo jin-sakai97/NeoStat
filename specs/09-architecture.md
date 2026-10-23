@@ -157,3 +157,19 @@ Do **not** add express-async-handler.
 - **node-pg-migrate**: SQL migrations with `-- Up Migration` / `-- Down Migration`. Set
   `--migrations-dir migrations` and `DATABASE_URL`.
 - **connect-pg-simple**: pass `{ pool, tableName: "user_sessions", createTableIfMissing: false }`.
+
+## 6. As built (2026-10-23)
+
+These differences from the tree in §1 are deliberate simplifications:
+
+- Auth, comments, users and dashboard logic that is small lives in `server/src/routes/*.routes.ts`.
+  Larger write logic is in `domain/tasks.service.ts`, `domain/projects.service.ts` (projects +
+  membership) and `domain/users.service.ts`. Shared access helpers are in `domain/access.ts`.
+- `server/src/db/seed.ts` exports `seedDatabase()` (reused by tests). The CLI is `db/seed-cli.ts`.
+  Migration status is `db/status.ts`.
+- Tests: `server/tests/unit/*` and `server/tests/integration/{auth,permissions,tasks-concurrency,lifecycle}.test.ts`.
+  Playwright lives at the repo root (`playwright.config.ts`, `e2e/conflict.spec.ts`).
+- Client dialogs are grouped as `components/projects/project-dialogs.tsx`,
+  `components/users/user-dialogs.tsx` and `components/tasks/{task-form,task-dialog,conflict-dialog,comments,task-table}.tsx`.
+- shadcn/ui uses the `radix-nova` style with the `cn` package. The Geist Google font was removed
+  (system font stack, offline-safe build).

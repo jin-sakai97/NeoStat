@@ -78,6 +78,15 @@ check was skipped, say so.
   `/auth/me`) and the intentional 409.
 - Deferred P1: per-field Latest/Mine picker (T5.8).
 
+### 2026-10-23 — S6 + S7 Verification and submission
+
+- README rewritten (setup, env, demo accounts, conflict demo, architecture note, matrix, test
+  results, limitations, AI note, troubleshooting). `specs/11-explain.md` completed with file:line refs.
+- Fresh-DB check: rollback → migrate → seed → seed (0 inserted) ✅ on `neostat`; integration suite
+  resets `neostat_test` from scratch per test file ✅.
+- Remaining manual checks for the participant: full keyboard pass (F3) and the F1 demo script.
+- Open P1: login rate limit (A8), per-field conflict picker (T5.8).
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

@@ -97,19 +97,19 @@ Build in this order. Each service follows the lock order in `→ 03 §6`.
 
 ## S6 — Verification (150–175 min) · all
 
-- [ ] **T6.1** Complete the integration suites so that every **P0** scenario in `08-acceptance.md` has a test or a manual check recorded.
-- [ ] **T6.2** Manual run of the `08 §F` browser script. Note the results in `10-verification-log.md`.
-- [ ] **T6.3** Keyboard pass and a 390px mobile pass (`06 §8`).
-- [ ] **T6.4** Fresh DB check: `DROP`/recreate `neostat_test` → migrate → seed twice → tests pass.
-- [ ] **T6.5** *(P1)* Playwright `conflict.spec.ts` with two contexts. *(P1)* Screenshots.
-- [ ] **T6.6** Fix everything found. Re-run all checks.
+- [x] **T6.1** Complete the integration suites so that every **P0** scenario in `08-acceptance.md` has a test or a manual check recorded.
+- [ ] **T6.2** Manual run of the `08 §F` browser script (participant, before demo). Note the results in `10-verification-log.md`.
+- [ ] **T6.3** Keyboard pass (manual, participant) — 390px mobile pass ✅ automated.
+- [x] **T6.4** Fresh DB check: `DROP`/recreate `neostat_test` → migrate → seed twice → tests pass.
+- [x] **T6.5** *(P1)* Playwright `conflict.spec.ts` with two contexts. *(P1)* Screenshots.
+- [x] **T6.6** Fix everything found. Re-run all checks.
 - **Commit:** `S6: complete acceptance tests and fixes`
 
 ## S7 — Submission (175–180 min) · R12
 
-- [ ] **T7.1** Rewrite `README.md` with the sections listed in `00-plan` (prerequisites, PG options, setup commands, env table, demo accounts, two-browser conflict demo steps, role explanation and matrix, data model + concurrency explanation, test commands **with actual results**, known limitations / P2, architecture and AI-assistance note, troubleshooting for DB connection / port / CORS / cookie / session).
-- [ ] **T7.2** `npm run check && npm run test:integration` one final time. Paste the counts into the README.
-- [ ] **T7.3** `git status` review → commit `S7: finalize README and architecture note` → push → `git rev-parse HEAD` equals `git rev-parse origin/main`.
+- [x] **T7.1** Rewrite `README.md` with the sections listed in `00-plan` (prerequisites, PG options, setup commands, env table, demo accounts, two-browser conflict demo steps, role explanation and matrix, data model + concurrency explanation, test commands **with actual results**, known limitations / P2, architecture and AI-assistance note, troubleshooting for DB connection / port / CORS / cookie / session).
+- [x] **T7.2** `npm run check && npm run test:integration` one final time. Paste the counts into the README.
+- [x] **T7.3** `git status` review → commit `S7: finalize README and architecture note` → push → `git rev-parse HEAD` equals `git rev-parse origin/main`.
 
 ---
 

@@ -1,146 +1,244 @@
-# NeoStat — MERN hackathon starter
+# NeoStat — collaborative project management
 
-Prepared from the **Full Stack Engineering Hackathon: Guidelines & Prerequisites** PDF. The PDF provides setup guidance, not the application challenge. This repository is a runnable starting point; authentication and domain features await the challenge brief.
+A multi-user project-management platform built for the NeoStats Full Stack Engineering Hackathon.
+Admins, project managers, team members and viewers work on projects, team membership, tasks and
+comments. **Every permission is enforced by the API**, and **stale task updates are rejected with
+HTTP 409** instead of silently overwriting newer work.
 
-Uses **MongoDB + Express + React (Next.js App Router) + Node.js**, with TypeScript and Tailwind CSS. The PDF prefers PostgreSQL but explicitly accepts other databases; MongoDB follows the requested MERN stack. The React frontend and Express backend run as separate processes.
+**Stack:** Next.js 16 (App Router) + React 19 + TypeScript + Tailwind 4 + shadcn/ui · Express 5 API ·
+PostgreSQL (raw SQL via `pg`) · node-pg-migrate · cookie sessions stored in PostgreSQL.
+
+The full specification (requirements, permission matrix, data model, API contract, UI design,
+acceptance tests) lives in [`specs/`](specs/README.md).
+
+---
 
 ## Quick start
 
-Requires Node.js **22+**, npm, Git, and a running MongoDB instance. Docker is optional.
+**Prerequisites:** Node.js 22+ (tested on 26), npm, Git, PostgreSQL 14+ running locally (tested on
+18). Docker is optional.
 
 ```bash
 npm ci
-npm run setup
+npm run setup          # creates client/.env and server/.env from the examples, generates SESSION_SECRET
 ```
 
-`setup` copies the environment examples and preserves any existing `.env` files.
+### 1. Create the databases
 
-Choose one database option:
+Choose one option:
 
-- **Existing local MongoDB:** leave `MONGODB_URI=mongodb://127.0.0.1:27017/neostat` in `server/.env`. On the machine where this project was prepared, MongoDB was already running on port 27017.
-- **Docker:** run `npm run db:up`. Do this only if another MongoDB instance is not already using port 27017. The development container binds only to the local machine and keeps data in a named volume.
-- **Hosted MongoDB:** put your connection string, including the database name, in `server/.env`. Configure database credentials and network access in your provider.
+- **Local PostgreSQL (recommended):**
+  ```bash
+  createdb -h localhost -U postgres -O "$USER" neostat
+  createdb -h localhost -U postgres -O "$USER" neostat_test   # used only by integration tests
+  ```
+  If `createdb` reports a *template1 collation version mismatch*, add `-T template0`.
+  Then set `DATABASE_URL` and `TEST_DATABASE_URL` in `server/.env`, for example
+  `postgresql://<your-user>@localhost:5432/neostat`.
+- **Docker:** `npm run db:up` starts `postgres:18` on `127.0.0.1:5432` (user/password
+  `postgres`/`postgres`, database `neostat`). The defaults in `server/.env.example` already match.
+  Create the test database with
+  `docker compose exec postgres createdb -U postgres neostat_test`.
 
-Then:
+### 2. Migrate, seed, run
 
 ```bash
-npm run db:migrate
-npm run db:seed
-npm run dev
+npm run db:migrate     # create the schema
+npm run db:seed        # demo users, projects, tasks, comments (safe to re-run)
+npm run dev            # web on http://localhost:3000, API on http://localhost:4000/api
 ```
 
-Open **http://localhost:3000**. The page calls the Express server at **http://localhost:4000/api** and shows the API/database connection result. Use **Check again** to retry after a connection failure.
+Open **http://localhost:3000** and sign in with a demo account below.
+
+## Demo accounts
+
+Every account uses the password **`NeoStatsDemo!2026`** (development seed only).
+
+| Email | Account role | What to try |
+| --- | --- | --- |
+| `admin@neostat.test` | Admin | Users page, create projects, change a manager, archive/restore/delete |
+| `admin2@neostat.test` | Admin | Second admin, for last-admin safeguards |
+| `manager@neostat.test` | Project Manager | Manages **Website Redesign**; is only a *Viewer* in Mobile App Launch |
+| `manager2@neostat.test` | Project Manager | Manages **Mobile App Launch** and the archived **Legacy CRM Migration** |
+| `member@neostat.test` | Team Member | In both active projects; can edit title/description/status of own tasks |
+| `member2@neostat.test` | Team Member | In Website Redesign and the archived project |
+| `viewer@neostat.test` | Viewer | Read-only in Website Redesign |
+| `inactive@neostat.test` | Team Member (deactivated) | Sign-in fails with the generic message |
+
+## Two-browser conflict demo
+
+1. Open a normal window and a private window.
+2. Sign in as `manager@neostat.test` in one and `member@neostat.test` in the other.
+3. In both, open **Website Redesign → Tasks → Concurrent editing demo**. Note the `v1` badge.
+4. Change the title in both windows. Save in the manager's window first (it becomes `v2`).
+5. Save in the member's window. The member sees **"This task was changed by someone else"**,
+   comparing *Latest (v2)* with *Your change*. Nothing has been overwritten.
+6. Choose **Reload latest** (asks before discarding) or **Re-apply my changes**, then **Save
+   changes**.
+
+The same protection applies to the status dropdown in task tables, to reassignment and to delete.
 
 ## Commands
 
-Run commands from the repository root.
-
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start both servers with automatic reload |
-| `npm run dev:client` / `npm run dev:server` | Start either server separately |
-| `npm run build` | Build both applications |
-| `npm start` | Run both built applications; build first |
-| `npm run check` | Lint, typecheck, API tests, and production builds |
-| `npm test` | API behavior tests; no database required |
-| `npm run db:up` / `npm run db:down` | Start/stop the optional Docker database; retain its volume |
-| `npm run db:migrate` | Apply pending database migrations |
-| `npm run db:status` | List migration status |
-| `npm run db:rollback` | Roll back the last migration |
-| `npm run db:seed` | Insert sample profiles and notes without replacing existing records |
+| `npm run dev` | Start web (3000) and API (4000) with reload |
+| `npm run build` / `npm start` | Production build / run both built apps |
+| `npm run check` | Lint + typecheck + unit tests + production builds |
+| `npm run test:integration` | API tests against real PostgreSQL (`TEST_DATABASE_URL`, name must end in `_test`) |
+| `npm run test:e2e` | Playwright two-browser conflict test (needs `npm run dev` running and a seeded DB) |
+| `npm run db:migrate` / `db:rollback` / `db:status` | Apply / undo last / list migrations |
+| `npm run db:seed` | Insert missing demo data; never overwrites existing rows |
+| `npm run db:up` / `db:down` | Optional Docker PostgreSQL |
+
+To reset demo data: `npm run db:rollback && npm run db:migrate && npm run db:seed`.
 
 ## Environment variables
 
-| File | Variable | Default/example |
-| --- | --- | --- |
-| `client/.env` | `NEXT_PUBLIC_API_URL` | `http://localhost:4000/api` |
-| `server/.env` | `PORT` | `4000` |
-| `server/.env` | `CLIENT_ORIGIN` | `http://localhost:3000` |
-| `server/.env` | `MONGODB_URI` | `mongodb://127.0.0.1:27017/neostat` |
-| `server/.env` | `NODE_ENV` | `development` (`test` / `production` also accepted) |
+| File | Variable | Example | Notes |
+| --- | --- | --- | --- |
+| `client/.env` | `NEXT_PUBLIC_API_URL` | `http://localhost:4000/api` | Public, embedded at build time |
+| `server/.env` | `PORT` | `4000` | |
+| `server/.env` | `CLIENT_ORIGIN` | `http://localhost:3000` | Exact origin for CORS and the CSRF Origin check |
+| `server/.env` | `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/neostat` | |
+| `server/.env` | `TEST_DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/neostat_test` | Integration tests **drop and recreate** this schema |
+| `server/.env` | `SESSION_SECRET` | *(generated)* | ≥ 32 chars; `npm run setup` fills it |
+| `server/.env` | `NODE_ENV` | `development` | `production` enables Secure cookies and disables the seed |
 
-`NEXT_PUBLIC_*` values are public browser configuration and are embedded at build time. Never put credentials there. Restart development servers after changing environment files; rebuild the frontend when changing its production API URL. CORS expects the exact frontend origin (scheme, host, and port; no trailing slash). If Next.js uses a different port, update `CLIENT_ORIGIN`.
+`.env` files are git-ignored; only `.env.example` files are committed.
 
-Secrets stay in ignored `.env` files; only `.env.example` files are committed. For production, set `NODE_ENV=production` for the backend and provide a secured MongoDB connection. The Compose file is intended for local development.
+---
 
-## Structure
+## Architecture note
 
 ```text
-client/
-  src/app/             Next.js routes, layout, and Tailwind styling
-  src/lib/api.ts       Browser-to-Express API connection
-server/
-  src/app.ts           Express app, routes, CORS, validation, errors
-  src/index.ts         Server startup and graceful shutdown
-  src/config/          Validated environment configuration
-  src/db/              Database connection and seed script
-  src/models/          Mongoose User and Note models
-  migrations/          Versioned database migrations
-  tests/               API tests using Node test runner and Supertest
-  migrate-mongo-config.cjs
-scripts/setup.mjs      Non-destructive environment setup
-compose.yaml          Optional local MongoDB
-package.json          npm workspaces and shared commands
+Browser :3000 (Next.js, TanStack Query)  ──fetch, credentials + X-CSRF-Token──▶  Express :4000/api
+                                                                                  helmet → CORS(exact origin) → JSON(100kb)
+                                                                                  → session (PostgreSQL store) → CSRF check
+                                                                                  → loadActor (fresh user from DB)
+                                                                                  → route → Zod validation → service
+                                                                                  → transaction + row locks → SQL repos → PostgreSQL
 ```
 
-## Database and sample data
+- **Next.js only presents.** It never reads the database or the session. All rules live in the
+  Express API: routes → services (transactions, permissions, business rules) → repositories
+  (parameterized SQL).
+- **Why raw SQL:** the important logic (scoped queries, version-conditioned updates, row locks)
+  is visible and explainable line by line. Dynamic `ORDER BY` and `SET` columns come only from
+  whitelists.
 
-The initial migration creates `users` and `notes`, a unique user email index, a unique sparse note seed key index, and an owner lookup index. Applied migrations are recorded in the `migrations` collection. Automatic Mongoose index creation is disabled so migrations control the database setup.
+### Data model
 
-The seed script creates two sample profiles (`alex@example.test`, `sam@example.test`) and a welcome note for each. Re-running it preserves existing record content and does not duplicate the sample records. Seeding is disabled when `NODE_ENV=production`.
+| Table | Key columns |
+| --- | --- |
+| `users` | `role` (ADMIN / PROJECT_MANAGER / TEAM_MEMBER / VIEWER), `is_active`, `auth_version`, unique lowercase `email`, scrypt `password_hash` |
+| `projects` | `name`, `description`, `archived_at`, `deleted_at` (soft delete), `created_by` |
+| `project_members` | PK `(project_id, user_id)`, `role` (PROJECT_MANAGER / TEAM_MEMBER / VIEWER); **partial unique index ⇒ at most one manager per project** |
+| `tasks` | `status`, `priority`, `assignee_id`, `due_date`, **`version`**; FK `(project_id, assignee_id) → project_members` so an assignee is always a member |
+| `comments` | `task_id` (cascade on task delete), `author_id`, `body` |
+| `user_sessions` | connect-pg-simple session store |
 
-**Sample login credentials: not applicable yet.** These are data fixtures, not login accounts. No login, password storage, session management, or authorization is implemented. Add those once the challenge specifies access rules, then update this README with working demo credentials and verify two independent browser sessions.
+Roles are CHECK-constrained text rather than a lookup table: there are four fixed roles, and their
+behavior is code, not data. The schema is one SQL migration:
+[`server/migrations/1761200000000_initial-schema.sql`](server/migrations/1761200000000_initial-schema.sql).
 
-Inspect data in MongoDB Compass or `mongosh`:
+### Authorization
 
-```bash
-mongosh mongodb://127.0.0.1:27017/neostat
-# In the shell:
-db.users.find()
-db.notes.find()
-```
+- **Account role = ceiling, project role = scope.** Admins see and manage every project. Everyone
+  else needs a membership. A Project Manager *account* can be a Viewer in someone else's project.
 
-Create a future migration from `server/`:
+  | Action | Admin | Project manager | Project team member | Project viewer |
+  | --- | :-: | :-: | :-: | :-: |
+  | View project, tasks, team, comments | ✅ all | ✅ | ✅ | ✅ |
+  | Create / archive / restore / delete project, replace manager | ✅ | ❌ | ❌ | ❌ |
+  | Edit project details, add/remove members, change member roles | ✅ | ✅ | ❌ | ❌ |
+  | Create / delete / assign tasks, edit any field | ✅ | ✅ | ❌ | ❌ |
+  | Edit title, description, status of a task **assigned to me** | ✅ | ✅ | ✅ | ❌ |
+  | Comment; delete own comment | ✅ | ✅ | ✅ | ❌ |
+  | Delete others' comments | ✅ | ✅ | ❌ | ❌ |
+  | Manage user accounts | ✅ | ❌ | ❌ | ❌ |
 
-```bash
-npx migrate-mongo create describe-your-change -f migrate-mongo-config.cjs
-```
+- Outside your projects → **404** (existence isn't revealed). Visible but not allowed → **403**.
+  Archived project writes → **409 `PROJECT_ARCHIVED`**.
+- A task PATCH that contains *any* field you may not edit is rejected entirely.
+- Lists, counts and the dashboard use the same scoped SQL as single-resource reads.
+- Removing a member, downgrading them to Viewer, or deactivating a user **unassigns their tasks in
+  the same transaction and bumps those tasks' versions**. Guards prevent removing a project's only
+  manager, deactivating yourself, or removing the last active admin (row locks make this safe
+  under concurrent requests).
 
-Implement both `up` and `down`, then run root migration commands. Do not edit already-applied migrations. The initial rollback removes its indexes but deliberately preserves documents and collections; reapply it to restore the indexes.
+### Concurrent updates
 
-## Architecture and security
+Every task has a `version`. Clients send it with every change, including status changes and
+deletes, and the server runs
+`UPDATE tasks SET …, version = version + 1 WHERE id = $1 AND version = $2`. If no row matches,
+someone saved first: the API returns **409 `TASK_VERSION_CONFLICT`** with the latest task, and the
+UI shows Latest vs Mine for review. Authorization is checked first, so a user who lost access gets
+403/404, never the newer data. Details and code pointers: [`specs/11-explain.md`](specs/11-explain.md).
 
-Next.js owns the UI. Express owns API input validation, future business rules and permissions, and database access. The browser never connects to MongoDB. Mongoose models define document structure; Zod validates API inputs and server configuration. User emails are unique at the database level; note ownership is an ObjectId reference, not a MongoDB-enforced foreign key. Future write endpoints must validate owner existence and authorize access on the server.
+### Security summary
 
-The starter exposes only public diagnostic endpoints. Helmet adds HTTP security headers, JSON request sizes are limited, CORS allows the configured frontend origin, and errors return meaningful status codes without database details. CORS is not authentication. Before exposing user data, implement authentication, authorization, and appropriate abuse controls. Decide on cookies (with CSRF protection) or tokens when implementing login.
+scrypt password hashing with constant-time comparison · HttpOnly SameSite=Lax session cookie
+with server-side sessions · session ID regenerated at login · 8-hour absolute expiry ·
+`auth_version` revokes sessions on role, email, password or activation changes · CSRF:
+synchronizer token header plus exact Origin check · identical error for unknown, wrong-password
+and inactive logins · Zod `strict` validation on every input · `Cache-Control: no-store` ·
+generic 500 messages.
 
-## API checks
+---
 
-```bash
-curl http://localhost:4000/api/hello
-curl 'http://localhost:4000/api/hello?name=Alex'
-curl http://localhost:4000/api/health
-```
+## Tests and results
 
-- `GET /api/hello?name=Alex`: hello-world response; optional `name` must be 1–80 characters.
-- `GET /api/health`: HTTP 200 when MongoDB responds; HTTP 503 if database readiness is lost.
-- Invalid input/JSON: HTTP 400. Oversized JSON: HTTP 413. Unknown routes: HTTP 404.
+| Suite | Command | Result (2026-10-23) |
+| --- | --- | --- |
+| Unit (policy matrix, password hashing, app errors/CORS) | `npm test` | **9 / 9 pass** |
+| Integration (real PostgreSQL: auth, CSRF, permission matrix, lifecycle, concurrency, validation) | `npm run test:integration` | **30 / 30 pass** |
+| Browser (two-context conflict flow, viewer read-only) | `npm run test:e2e` | **2 / 2 pass** |
+| Lint + typecheck + production builds | `npm run check` | **pass** |
 
-The API connects to MongoDB before listening. If MongoDB is unavailable at startup, it exits with a setup message instead of pretending to be ready.
+Highlights: two simultaneous same-version updates produce exactly one 200 and one 409; a
+member's mixed allowed/forbidden PATCH changes nothing; out-of-scope task and comment IDs return
+404; deactivation kills existing sessions and unassigns tasks everywhere; two admins demoting each
+other in parallel leave exactly one admin.
 
-## Readiness and remaining challenge work
+## Known limitations and next steps
 
-- [x] Next.js, React, TypeScript, Tailwind, and separate Express API scaffolded.
-- [x] npm workspaces, root development/build commands, environment templates, and lockfile.
-- [x] MongoDB connection, versioned migration, repeatable sample seed, and API connection page.
-- [x] Server validation, error responses, and focused API tests.
-- [ ] Implement the application specified in the challenge brief.
-- [ ] Add authentication/permissions, demo login credentials, and test two browser sessions.
-- [ ] Add tests for the challenge's critical business rules.
-- [ ] Confirm your browser, editor, API client, and GitHub access are ready.
+- No login rate limiting yet (planned: 10 failed attempts per IP per 15 minutes).
+- The conflict dialog compares field by field but offers whole-draft actions (Reload or Re-apply);
+  a per-field picker is planned.
+- No real-time push: lists refresh on window focus, and conflicts are caught on save.
+- Soft-deleted projects can't be restored from the UI. There are no invitations or
+  password-reset emails (admins create accounts).
+- Roadmap: Kanban view (same versioned PATCH), audit history, SSE notifications, labels,
+  multiple managers. See [`specs/00-plan.md`](specs/00-plan.md) §12.
 
-Git is already initialized. Commit the scaffold and subsequent work with clear messages when ready.
+## AI assistance
 
-Verification on setup: lint, TypeScript checks, four API tests, both production builds, live API responses, and a Chromium browser connection check passed. The migration and repeated seed were checked against local MongoDB. `npm audit --omit=dev` reported zero vulnerabilities; the full audit reported five high-severity entries in the development-only Next.js ESLint dependency chain (`braces` / `micromatch` / `fast-glob`). The suggested automatic fix downgrades Next.js lint configuration across major versions, so it was not applied.
+> **Participant: review and personalize this section before submission.** The brief requires
+> stating which parts AI helped build and which decisions were yours.
 
-Implementation references: [Next.js installation](https://nextjs.org/docs/app/getting-started/installation), [Mongoose connections](https://mongoosejs.com/docs/connections.html).
+- **Planning:** a first plan was drafted with ChatGPT. Claude Code reviewed it against the brief
+  and turned it into the specification in `specs/` (changes and reasons in `specs/01-review.md`).
+- **Decisions made by the participant during the session:** spec-driven workflow; PostgreSQL
+  instead of the MongoDB starter; Team Members see all tasks in their projects (the brief says
+  "view assigned tasks"); building during the live 3-hour window; Next.js + Express separation.
+- **Implementation:** code was generated with Claude Code (Claude Opus) slice by slice (S1–S7 in
+  `specs/07-tasks.md`), each slice verified by lint, typecheck and real-database tests before
+  being committed.
+- **Understanding the code:** `specs/11-explain.md` walks through the permission predicate, scoped
+  SQL, version-conditioned update, cleanup transaction and session lifecycle, with file and line
+  references.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| `API startup failed. Check DATABASE_URL…` | PostgreSQL isn't running, or the URL/database is wrong. Test with `psql "$DATABASE_URL" -c 'select 1'`, then run `npm run db:migrate` |
+| `relation "users" does not exist` | Run `npm run db:migrate` |
+| `template database "template1" has a collation version mismatch` | Create the DB with `createdb -T template0 …` |
+| Login works but every request is 401 / you bounce back to login | Use **`localhost`** (not `127.0.0.1`) for both apps so the cookie is sent; check `CLIENT_ORIGIN` matches the browser URL exactly |
+| `CORS` errors in the browser console | `CLIENT_ORIGIN` must equal the web origin exactly (scheme, host, port; no trailing slash); restart the API |
+| 403 `CSRF_FAILED` | Reload the page (the token is re-fetched); make sure requests come from `CLIENT_ORIGIN` |
+| `EADDRINUSE` on 3000/4000 | Another dev server is running: `ss -ltnp \| grep -E ':(3000\|4000)'` and stop it |
+| Integration tests refuse to run | `TEST_DATABASE_URL` must point to a database whose name ends in `_test` |
+| `next build` fails fetching fonts | The app uses the system font stack and needs no network; remove any `next/font/google` import |
