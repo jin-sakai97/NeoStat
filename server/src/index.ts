@@ -5,7 +5,12 @@ import { createPool, ping } from "./db/pool.js";
 const pool = createPool(env.DATABASE_URL);
 try {
   await ping(pool);
-  const app = createApp({ clientOrigin: env.CLIENT_ORIGIN, checkDatabase: () => ping(pool) });
+  const app = createApp({
+    pool,
+    clientOrigin: env.CLIENT_ORIGIN,
+    sessionSecret: env.SESSION_SECRET,
+    secureCookies: env.NODE_ENV === "production",
+  });
   const server = app.listen(env.PORT, () => {
     console.log(`API listening at http://localhost:${env.PORT}/api`);
   });

@@ -48,6 +48,14 @@ check was skipped, say so.
   comments 5 · `npm run check` → lint ✅ typecheck ✅ unit 4/4 ✅ builds ✅ · `GET /api/health` → 200.
 - Known: the starter home page still calls the removed `/api/hello`; replaced in S4.
 
+### 2026-10-23 — S2 Authentication and policy
+
+- Session cookie `neostat.sid` (PG store), login regenerates the session and rotates the CSRF token,
+  `loadActor` re-reads the user on every request, `auth_version` revocation, pure `policy.ts`.
+- `npm run check` → lint ✅ typecheck ✅ unit 9/9 ✅ builds ✅ · `npm run test:integration` → 6/6 ✅
+  (A1, A2, A3, A4, A5, A6, A7, A10). B18 partially covered by `tests/unit/policy.test.ts`.
+- Deferred (P1): login rate limit (A8).
+
 <!-- Template for next entries:
 ### YYYY-MM-DD HH:MM — S<n> <name>
 - Commit: <sha>

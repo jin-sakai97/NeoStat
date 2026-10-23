@@ -1,18 +1,33 @@
 import cors from "cors";
-import express, { type ErrorRequestHandler } from "express";
+import express from "express";
 import helmet from "helmet";
+import type pg from "pg";
+import { ping } from "./db/pool.js";
+import { loadActor } from "./http/actor.js";
+import { csrfProtection } from "./http/csrf.js";
+import { errorHandler, notFoundHandler } from "./http/errors.js";
+import { sessionMiddleware } from "./http/session.js";
+import { authRoutes, sessionRoutes } from "./routes/auth.routes.js";
 
 type AppOptions = {
+  pool: pg.Pool;
   clientOrigin: string;
-  checkDatabase: () => Promise<void>;
+  sessionSecret: string;
+  secureCookies?: boolean;
+  checkDatabase?: () => Promise<void>;
 };
 
-export function createApp({ clientOrigin, checkDatabase }: AppOptions) {
+export function createApp({ pool, clientOrigin, sessionSecret, secureCookies = false, checkDatabase = () => ping(pool) }: AppOptions) {
   const app = express();
   app.disable("x-powered-by");
+  app.set("trust proxy", false);
   app.use(helmet());
-  app.use(cors({ origin: clientOrigin }));
+  app.use(cors({ origin: clientOrigin, credentials: true, allowedHeaders: ["Content-Type", "X-CSRF-Token"] }));
   app.use(express.json({ limit: "100kb" }));
+  app.use("/api", (_req, res, next) => {
+    res.set("Cache-Control", "no-store");
+    next();
+  });
 
   app.get("/api/health", async (_req, res) => {
     try {
@@ -23,25 +38,13 @@ export function createApp({ clientOrigin, checkDatabase }: AppOptions) {
     }
   });
 
-  app.use((_req, res) => {
-    res.status(404).json({ error: { code: "NOT_FOUND", message: "Route not found." } });
-  });
+  app.use("/api", sessionMiddleware(pool, sessionSecret, secureCookies));
+  app.use("/api", csrfProtection(clientOrigin));
+  app.use("/api", authRoutes(pool));
+  app.use("/api", loadActor(pool));
+  app.use("/api", sessionRoutes(pool));
 
-  const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
-    if (res.headersSent) {
-      next(error);
-      return;
-    }
-    if (error.type === "entity.parse.failed") {
-      res.status(400).json({ error: { code: "INVALID_JSON", message: "Request body must be valid JSON." } });
-      return;
-    }
-    if (error.type === "entity.too.large") {
-      res.status(413).json({ error: { code: "PAYLOAD_TOO_LARGE", message: "Request body is too large." } });
-      return;
-    }
-    res.status(500).json({ error: { code: "INTERNAL", message: "Something went wrong. Try again." } });
-  };
+  app.use(notFoundHandler);
   app.use(errorHandler);
   return app;
 }

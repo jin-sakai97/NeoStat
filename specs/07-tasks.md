@@ -39,17 +39,17 @@ Commit message format: `S<n>: <imperative summary>` + body bullets + the attribu
 
 ## S2 — Authentication and policy (25–50 min) · R01 R02
 
-- [ ] **T2.1** `http/errors.ts`: `AppError(status, code, message, {fieldErrors?, details?})`, plus an error handler mapping per `→ 05 §4` (including `entity.parse.failed` → INVALID_JSON, `entity.too.large` → 413, pg `ECONNREFUSED`/`57P01` → 503, `23505` → 409).
-- [ ] **T2.2** `http/validate.ts` with Zod 4 `z.strictObject` and `z.flattenError` → `fieldErrors`.
-- [ ] **T2.3** `domain/passwords.ts`: async scrypt hash and verify with the format in `→ 09 §4`. Unit test: verify the right password, reject the wrong one, check the hash format.
-- [ ] **T2.4** `http/session.ts`: config exactly per `→ 05 §1`. `app.set('trust proxy', false)`.
-- [ ] **T2.5** `http/csrf.ts`: Origin check plus a constant-time token comparison on non-GET methods.
-- [ ] **T2.6** `routes/auth.routes.ts`: `/auth/csrf`, `/auth/login` (generic failure; rate limit is P1, `regenerate`, rotate token), `/auth/me`, `/auth/logout`.
-- [ ] **T2.7** `http/actor.ts` `loadActor`: 401 rules (`→ 05 §1`). Also add `Cache-Control: no-store` middleware.
-- [ ] **T2.8** `domain/policy.ts` per `→ 03 §2`, plus `projectCapabilities()` and `taskCapabilities()`. **Unit tests** cover every row of the `03 §3` matrix as pure-function cases.
-- [ ] **T2.9** `PATCH /profile`.
-- [ ] **T2.10** Integration test helpers (`tests/integration/helpers.ts`): refuse to run unless the DB name ends in `_test`. Reset the schema, migrate, seed. `loginAs(email)` returns a Supertest agent holding cookie and CSRF token. Script: `test:integration` = `node --import tsx --test --test-concurrency=1 tests/integration/*.test.ts` with `NODE_ENV=test`.
-- [ ] **T2.11** `auth.test.ts`: every active seeded role logs in. Inactive or wrong password gives the identical 401 body. Missing CSRF → 403. Foreign Origin → 403. Logout → `/auth/me` 401. Bumping `auth_version` in SQL → 401.
+- [x] **T2.1** `http/errors.ts`: `AppError(status, code, message, {fieldErrors?, details?})`, plus an error handler mapping per `→ 05 §4` (including `entity.parse.failed` → INVALID_JSON, `entity.too.large` → 413, pg `ECONNREFUSED`/`57P01` → 503, `23505` → 409).
+- [x] **T2.2** `http/validate.ts` with Zod 4 `z.strictObject` and `z.flattenError` → `fieldErrors`.
+- [x] **T2.3** `domain/passwords.ts`: async scrypt hash and verify with the format in `→ 09 §4`. Unit test: verify the right password, reject the wrong one, check the hash format.
+- [x] **T2.4** `http/session.ts`: config exactly per `→ 05 §1`. `app.set('trust proxy', false)`.
+- [x] **T2.5** `http/csrf.ts`: Origin check plus a constant-time token comparison on non-GET methods.
+- [x] **T2.6** `routes/auth.routes.ts`: `/auth/csrf`, `/auth/login` (generic failure; rate limit is P1, `regenerate`, rotate token), `/auth/me`, `/auth/logout`.
+- [x] **T2.7** `http/actor.ts` `loadActor`: 401 rules (`→ 05 §1`). Also add `Cache-Control: no-store` middleware.
+- [x] **T2.8** `domain/policy.ts` per `→ 03 §2`, plus `projectCapabilities()` and `taskCapabilities()`. **Unit tests** cover every row of the `03 §3` matrix as pure-function cases.
+- [x] **T2.9** `PATCH /profile`.
+- [x] **T2.10** Integration test helpers (`tests/integration/helpers.ts`): refuse to run unless the DB name ends in `_test`. Reset the schema, migrate, seed. `loginAs(email)` returns a Supertest agent holding cookie and CSRF token. Script: `test:integration` = `node --import tsx --test --test-concurrency=1 tests/integration/*.test.ts` with `NODE_ENV=test`.
+- [x] **T2.11** `auth.test.ts`: every active seeded role logs in. Inactive or wrong password gives the identical 401 body. Missing CSRF → 403. Foreign Origin → 403. Logout → `/auth/me` 401. Bumping `auth_version` in SQL → 401.
 - **Checks:** `npm run check`, `npm run test:integration`.
 - **Commit:** `S2: add session auth, CSRF protection and permission policy`
 

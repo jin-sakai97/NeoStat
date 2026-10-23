@@ -2,12 +2,17 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import request from "supertest";
 import { createApp } from "../../src/app.js";
+import { createPool } from "../../src/db/pool.js";
 
-const app = createApp({ clientOrigin: "http://localhost:3000", checkDatabase: async () => {} });
+// Never connected: these tests do not touch the database.
+const pool = createPool("postgresql://nobody@127.0.0.1:1/none");
+const base = { pool, clientOrigin: "http://localhost:3000", sessionSecret: "x".repeat(32) };
+
+const app = createApp({ ...base, checkDatabase: async () => {} });
 
 test("health reports database readiness and does not leak connection errors", async () => {
   await request(app).get("/api/health").expect(200, { data: { status: "ok" } });
-  const failing = createApp({ clientOrigin: "http://localhost:3000", checkDatabase: async () => { throw new Error("secret"); } });
+  const failing = createApp({ ...base, checkDatabase: async () => { throw new Error("secret"); } });
   const response = await request(failing).get("/api/health").expect(503);
   assert.equal(response.body.error.code, "DB_UNAVAILABLE");
   assert.equal(JSON.stringify(response.body).includes("secret"), false);
@@ -26,3 +31,5 @@ test("unknown routes and malformed JSON return meaningful errors", async () => {
   assert.equal(response.body.error.code, "INVALID_JSON");
   await request(app).post("/api/health").send({ text: "a".repeat(110000) }).expect(413);
 });
+
+test.after(() => pool.end());
